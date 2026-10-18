@@ -15,9 +15,13 @@ export function RequireRole({ role }: { role: string }) {
   return <Outlet />;
 }
 
-/** Public auth screens: a signed-in user goes straight to the profile. */
+/** Public auth screens: a signed-in user goes back to the page RequireAuth sent them from, else the profile. */
 export function GuestOnly() {
   const { isAuthenticated } = useAuth();
-  if (isAuthenticated) return <Navigate to="/profile" replace />;
+  const location = useLocation();
+  if (isAuthenticated) {
+    const from = (location.state as { from?: Location } | null)?.from;
+    return <Navigate to={from ? `${from.pathname}${from.search}` : "/profile"} replace />;
+  }
   return <Outlet />;
 }

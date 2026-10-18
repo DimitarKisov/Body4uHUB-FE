@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local notes (only for local use, not in the repo)
+API_MAP.md
+PROGRESS.md

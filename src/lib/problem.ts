@@ -13,6 +13,8 @@ export type UiProblem =
 /** ctx: "register" | "login" | "resend" | "profile" | "password" | "admin.user" */
 export function mapProblem(p: ProblemDetails, ctx: string): UiProblem {
   switch (p.status) {
+    case 0: // network failure (api/client NETWORK_ERROR)
+      return { kind: "banner", tone: "error", titleKey: "err.500.t", textKey: "err.network" };
     case 400:
       return { kind: "fields", fields: Object.fromEntries((p.errors ?? []).map((e) => [camel(e.field), `v.${camel(e.field)}.server`])) };
     case 401:

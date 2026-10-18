@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { GuestOnly, RequireAuth, RequireRole } from "@/auth/guards";
 import { AppShell } from "@/components/layout/AppShell";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import { LoginPage } from "@/pages/auth/LoginPage";
 import { Placeholder } from "@/pages/Placeholder";
 
 export default function App() {
@@ -11,7 +12,7 @@ export default function App() {
         <Route element={<GuestOnly />}>
           <Route path="/register" element={<Placeholder auth titleKey="register.title" />} />
           <Route path="/register/check-email" element={<Placeholder auth titleKey="check.title" />} />
-          <Route path="/login" element={<Placeholder auth titleKey="login.title" />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/resend-confirmation" element={<Placeholder auth titleKey="resend.title" />} />
         </Route>
         {/* Reachable while signed in too: the link comes from an email. */}
