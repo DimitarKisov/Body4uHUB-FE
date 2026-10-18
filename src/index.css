@@ -1,0 +1,114 @@
+/* Body4uHUB — Tailwind v4 + shadcn/ui globals (src/index.css in the Vite app).
+   Tokens are the same CSS variables as the design system (tokens/*.css). Components never hard-code hex. */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #F3F2EE;
+  --foreground: #1A1B18;
+  --card: #FAF9F6;
+  --card-foreground: #1A1B18;
+  --popover: #FAF9F6;
+  --popover-foreground: #1A1B18;
+  --primary: #DDE9A8;
+  --primary-hover: #CFDD92;
+  --primary-foreground: #1A1B18;
+  --secondary: #1A1B18;
+  --secondary-foreground: #FAF9F6;
+  --muted: #EDEBE5;
+  --muted-foreground: #66655E;
+  --accent: #EDEBE5;
+  --accent-foreground: #1A1B18;
+  --destructive: #D64545;
+  --destructive-foreground: #FAF9F6;
+  --border: #E0DED7;
+  --border-strong: #C9C6BD;
+  --input: #E0DED7;
+  --ring: #1A1B18;
+  --success: #2E9E5B;  --success-foreground: #1D7342; --success-subtle: #E4F2E8;
+  --warning: #D98A1C;  --warning-foreground: #8F5508; --warning-subtle: #FAEEDB;
+  --error: #D64545;    --error-foreground: #B02F2F;   --error-subtle: #F9E4E1;
+  --info: #3A6FD8;     --info-foreground: #2A57B3;    --info-subtle: #E3EAF8;
+  --role-admin: #1A1B18;   --role-admin-foreground: #FAF9F6;
+  --role-trainer: #DDE9A8; --role-trainer-foreground: #1A1B18;
+  --role-user: #EDEBE5;    --role-user-foreground: #45443F;
+  --body: #45443F;          /* paragraph text */
+  --placeholder: #9E9B92;   /* placeholders, inert "скоро" nav */
+  --topbar-bg: rgb(243 242 238 / .86);
+  --overlay: rgb(26 27 24 / .48);
+  --body: #45443F;          /* paragraph text */
+  --placeholder: #9E9B92;   /* placeholders, inert "скоро" nav */
+  --topbar-bg: rgb(243 242 238 / .86);
+  --overlay: rgb(26 27 24 / .48);
+  --radius: 10px;
+}
+
+/* Future dark theme: override the same variables here — no component changes needed.
+.dark { --background: …; --foreground: …; … } */
+
+@theme inline {
+  --font-display: "Unbounded", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-body: var(--body);
+  --color-placeholder: var(--placeholder);
+  --color-topbar: var(--topbar-bg);
+  --color-overlay: var(--overlay);
+  --color-body: var(--body);
+  --color-placeholder: var(--placeholder);
+  --color-topbar: var(--topbar-bg);
+  --color-overlay: var(--overlay);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);       --color-success-foreground: var(--success-foreground); --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);       --color-warning-foreground: var(--warning-foreground); --color-warning-subtle: var(--warning-subtle);
+  --color-error: var(--error);           --color-error-foreground: var(--error-foreground);     --color-error-subtle: var(--error-subtle);
+  --color-info: var(--info);             --color-info-foreground: var(--info-foreground);       --color-info-subtle: var(--info-subtle);
+  --color-role-admin: var(--role-admin); --color-role-admin-foreground: var(--role-admin-foreground);
+  --color-role-trainer: var(--role-trainer); --color-role-trainer-foreground: var(--role-trainer-foreground);
+  --color-role-user: var(--role-user);   --color-role-user-foreground: var(--role-user-foreground);
+
+  --radius-sm: calc(var(--radius) - 2px);  /* 8 */
+  --radius-md: var(--radius);              /* 10 */
+  --radius-lg: calc(var(--radius) + 2px);  /* 12 */
+
+  --shadow-md: 0 6px 16px -6px rgb(26 27 24 / .14), 0 2px 4px rgb(26 27 24 / .05);
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --shadow-focus: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --shadow-focus: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+  --shadow-lg: 0 20px 40px -12px rgb(26 27 24 / .22), 0 4px 10px rgb(26 27 24 / .06);
+}
+
+@layer base {
+  input::placeholder, textarea::placeholder { @apply text-placeholder; }
+  @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation-duration: 1ms !important; transition-duration: 1ms !important; } }
+  input::placeholder, textarea::placeholder { @apply text-placeholder; }
+  @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation-duration: 1ms !important; transition-duration: 1ms !important; } }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground font-sans antialiased; }
+  h1, h2, h3 { @apply font-display font-semibold tracking-[-0.02em] text-balance; }
+  :focus-visible { @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background; }
+  time, td, .tabular { font-variant-numeric: tabular-nums; }
+}
