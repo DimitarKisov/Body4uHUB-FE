@@ -1,5 +1,6 @@
 // Session = { accessToken, user } from POST /api/auth/login. Kept in memory + sessionStorage.
 // JWT lives 60 min and there is no refresh token, so we sign out when `exp` passes.
+import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { configureApi } from "@/api/client";
 import type { AuthResponseDto, UserDto } from "@/api/types";
@@ -33,11 +34,14 @@ function loadSession(): AuthResponseDto | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthResponseDto | null>(loadSession);
+  const queryClient = useQueryClient();
 
   const signOut = useCallback(() => {
     sessionStorage.removeItem(STORAGE_KEY);
     setSession(null);
-  }, []);
+    // Cached server data belongs to the previous user (e.g. users/me) → drop it.
+    queryClient.clear();
+  }, [queryClient]);
 
   const signIn = useCallback((s: AuthResponseDto) => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s));

@@ -114,3 +114,9 @@
   :focus-visible { @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background; }
   time, td, .tabular { font-variant-numeric: tabular-nums; }
 }
+
+/* Skeleton pulse (design: components.css b4u-pulse, 1.4s). */
+@theme {
+  --animate-skel: skel 1.4s ease-in-out infinite;
+  @keyframes skel { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+}

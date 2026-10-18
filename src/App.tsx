@@ -10,6 +10,7 @@ import { ConfirmEmailPage } from "@/pages/auth/ConfirmEmailPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { ResendConfirmationPage } from "@/pages/auth/ResendConfirmationPage";
+import { ProfilePage } from "@/pages/account/ProfilePage";
 import { HomePage } from "@/pages/home/HomePage";
 import { Placeholder } from "@/pages/Placeholder";
 import { SoonPage } from "@/pages/SoonPage";
@@ -33,7 +34,7 @@ export default function App() {
 
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
-            <Route path="/profile" element={<Placeholder titleKey="profile.title" />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/edit" element={<Placeholder titleKey="edit.title" />} />
             <Route path="/security" element={<Placeholder titleKey="pw.title" />} />
             <Route element={<RequireRole role="Administrator" />}>
