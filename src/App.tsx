@@ -1,13 +1,17 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { GuestOnly, HomeRedirect, RequireAuth, RequireRole } from "@/auth/guards";
+import { GuestOnly, RequireAuth, RequireRole } from "@/auth/guards";
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import { PublicLayout } from "@/components/layout/PublicLayout";
+import { MODULES } from "@/lib/modules";
 import { CheckEmailPage } from "@/pages/auth/CheckEmailPage";
 import { ConfirmEmailPage } from "@/pages/auth/ConfirmEmailPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
+import { HomePage } from "@/pages/home/HomePage";
 import { Placeholder } from "@/pages/Placeholder";
+import { SoonPage } from "@/pages/SoonPage";
 
 export default function App() {
   const { pathname } = useLocation();
@@ -38,7 +42,13 @@ export default function App() {
           </Route>
         </Route>
 
-        <Route path="/" element={<HomeRedirect />} />
+        {/* Public, signed in or not. */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<HomePage />} />
+          {MODULES.map((m) => (
+            <Route key={m.id} path={m.to} element={<SoonPage module={m} />} />
+          ))}
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ErrorBoundary>

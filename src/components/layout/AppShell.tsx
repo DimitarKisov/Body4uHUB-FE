@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { Logo } from "@/components/brand/Logo";
+import { UserAvatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 interface NavItem { id: string; to?: string; icon: LucideIcon; label: string; shortLabel?: string; soon?: boolean }
@@ -67,7 +68,6 @@ export function AppShell() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { sections, mobile } = useNav();
-  const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`;
 
   const logout = () => { signOut(); navigate("/login", { replace: true }); };
 
@@ -93,9 +93,7 @@ export function AppShell() {
           <Link to="/" className="inline-flex rounded-sm lg:hidden"><Logo size="sm" /></Link>
           <div className="ml-auto flex items-center gap-2.5">
             {user && (
-              <span title={`${user.firstName} ${user.lastName}`} className="inline-flex size-9 flex-none items-center justify-center rounded-full bg-secondary font-display text-[13px] leading-none font-semibold text-primary">
-                {initials}
-              </span>
+              <span title={`${user.firstName} ${user.lastName}`} className="inline-flex"><UserAvatar user={user} /></span>
             )}
           </div>
         </header>
