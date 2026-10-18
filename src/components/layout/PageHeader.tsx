@@ -6,7 +6,7 @@ export function PageHeader({ eyebrow, title, description, actions, back }: {
   eyebrow?: string; title: string; description?: ReactNode; actions?: ReactNode; back?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-5 sm:mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
         {back && (
           <Button variant="ghost" size="sm" className="-ml-3 mb-3 [&_svg]:size-4" onClick={back.onClick}>

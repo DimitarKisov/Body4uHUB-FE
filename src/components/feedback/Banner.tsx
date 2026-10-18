@@ -22,7 +22,7 @@ interface BannerProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
 export function Banner({ tone = "info", title, actions, children, className, ...rest }: BannerProps) {
   const { bg, icon, Icon } = TONE[tone];
   return (
-    <div role={tone === "error" || tone === "warning" ? "alert" : "status"} className={cn("flex items-start gap-3 rounded-lg px-4 py-3.5 text-sm", bg, className)} {...rest}>
+    <div role={tone === "error" || tone === "warning" ? "alert" : "status"} className={cn("flex items-start gap-3 rounded-lg px-3.5 py-3 text-sm sm:px-4 sm:py-3.5", bg, className)} {...rest}>
       <Icon className={cn("mt-px size-5 shrink-0", icon)} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         {title && <p className="font-semibold text-foreground">{title}</p>}

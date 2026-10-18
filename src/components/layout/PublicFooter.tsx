@@ -18,10 +18,11 @@ export function PublicFooter() {
   ];
 
   return (
-    <footer className="mt-12 border-t border-border pt-10 pb-8">
+    <footer className="mt-6 border-t border-border pt-8 pb-8 min-[900px]:mt-12 min-[900px]:pt-10">
       <div className={publicWrap}>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-8">
-          <div>
+        {/* Phone: brand full-width, then a 2-column grid. */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-7 min-[900px]:grid-cols-[repeat(auto-fit,minmax(160px,1fr))] min-[900px]:gap-8">
+          <div className="col-span-full min-[900px]:col-auto">
             <Link to="/" className="inline-flex rounded-sm">
               <Logo size="sm" />
             </Link>

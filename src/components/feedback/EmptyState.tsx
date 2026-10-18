@@ -20,7 +20,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, tone = "neutral", title, children, actions, compact }: EmptyStateProps) {
   return (
-    <div className={cn("flex flex-col items-center gap-1.5 px-6 py-12 text-center", compact && "px-4 py-7")}>
+    <div className={cn("flex flex-col items-center gap-1.5 text-center", compact ? "px-4 py-7" : "px-4 py-9 sm:px-6 sm:py-12")}>
       <div className={cn("mb-3 flex size-14 items-center justify-center rounded-lg [&_svg]:size-[26px]", TONE[tone])}>{icon}</div>
       <h2 className="text-xl leading-[26px] tracking-[-0.015em]">{title}</h2>
       {children && <div className="max-w-[360px] text-sm text-body">{children}</div>}
