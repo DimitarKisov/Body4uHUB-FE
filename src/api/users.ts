@@ -56,3 +56,9 @@ export const userQueryKey = (id: string) => ["users", "detail", id] as const;
 /** Admin only. 204 · 400 empty list · 401 · 403 · 404 user or a role doesn't exist · 422 Trainer (only via "Направи треньор"). Roles the user has are skipped. */
 export const addUserRoles = (userId: string, roleIds: string[]) =>
   api(`/api/users/${encodeURIComponent(userId)}/roles`, { method: "POST", body: { roleIds } });
+
+/** Admin only. 201 { userId } · 401 · 403 · 404 user / Trainer role missing · 409 already a trainer · 422 domain rule. */
+export const makeTrainer = (userId: string) => api<{ userId: string }>("/api/users/trainers", { method: "POST", body: { userId } });
+
+/** Admin only. 204 (trainer profile + services are removed by the Services API via the TrainerRoleRevoked event) · 401 · 403 · 404 · 422 not a trainer. */
+export const removeTrainer = (userId: string) => api(`/api/users/trainers/${encodeURIComponent(userId)}`, { method: "DELETE" });

@@ -1,6 +1,6 @@
 // Screen 9 · Детайли за потребител (admin) — GET /api/users/{id} (design: ui_kits/identity/AdminScreens.jsx → UserDetailsScreen).
 // 401 global sign-out · 403 "Нямаш достъп" · 404 / 500 / network → error state (+ retry unless 404).
-// Actions report errors in one banner above the cards (RolesCard; the trainer card comes next).
+// Actions (RolesCard, TrainerCard) report errors in one banner above the cards.
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmailStatus } from "@/components/user/badges";
 import { formatDate, formatPhone } from "@/lib/format";
 import { RolesCard, type PageBanner } from "@/pages/admin/RolesCard";
+import { TrainerCard } from "@/pages/admin/TrainerCard";
 
 export function UserDetailsPage() {
   const { t } = useTranslation();
@@ -110,7 +111,10 @@ export function UserDetailsPage() {
           />
         </Card>
 
-        <RolesCard user={user} onProblem={setBanner} />
+        <div className="flex flex-col gap-4">
+          <RolesCard user={user} onProblem={setBanner} />
+          <TrainerCard user={user} onProblem={setBanner} />
+        </div>
       </div>
     </>
   );
