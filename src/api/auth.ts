@@ -21,6 +21,10 @@ export interface LoginRequest {
 /** 200 AuthResponseDto · 400 validation · 401 bad credentials · 403 email not confirmed · 429 (5/min per IP). */
 export const login = (body: LoginRequest) => api<AuthResponseDto>("/api/auth/login", { method: "POST", body, auth: false });
 
+/** 204 (also when already confirmed with the same token) · 400 missing email/token · 422 invalid, expired or unknown email. */
+export const confirmEmail = (email: string, token: string) =>
+  api("/api/auth/confirm-email", { method: "POST", body: { email, token }, auth: false });
+
 /** 204 always (even for unknown emails) · 400 validation · 429 (3 per 15 min per IP). */
 export const resendConfirmation = (email: string) =>
   api("/api/auth/resend-confirmation", { method: "POST", body: { email }, auth: false });

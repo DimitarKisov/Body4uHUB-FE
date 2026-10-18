@@ -1,9 +1,10 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { GuestOnly, RequireAuth, RequireRole } from "@/auth/guards";
+import { GuestOnly, HomeRedirect, RequireAuth, RequireRole } from "@/auth/guards";
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { CheckEmailPage } from "@/pages/auth/CheckEmailPage";
+import { ConfirmEmailPage } from "@/pages/auth/ConfirmEmailPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { Placeholder } from "@/pages/Placeholder";
@@ -22,7 +23,7 @@ export default function App() {
             <Route path="/resend-confirmation" element={<Placeholder auth titleKey="resend.title" />} />
           </Route>
           {/* Reachable while signed in too: the link comes from an email. */}
-          <Route path="/confirm-email" element={<Placeholder auth titleKey="confirm.loading" />} />
+          <Route path="/confirm-email" element={<ConfirmEmailPage />} />
         </Route>
 
         <Route element={<RequireAuth />}>
@@ -37,7 +38,8 @@ export default function App() {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<HomeRedirect />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ErrorBoundary>
   );

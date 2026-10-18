@@ -1,7 +1,7 @@
 // Signed-in shell. ≥1024px: 248px sidebar + sticky 60px top bar. <1024px: top bar with logo + fixed 64px bottom nav.
 import { CalendarDays, FileText, KeyRound, LogOut, User, Users, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
@@ -74,7 +74,7 @@ export function AppShell() {
   return (
     <div className="flex min-h-screen bg-background">
       <aside aria-label="Основна навигация" className="sticky top-0 hidden h-screen w-[248px] flex-none flex-col gap-1 border-r border-border bg-background px-3.5 py-5 lg:flex">
-        <div className="px-2.5 pt-1 pb-6"><Logo size="sm" /></div>
+        <div className="px-2.5 pt-1 pb-6"><Link to="/" className="inline-flex rounded-sm"><Logo size="sm" /></Link></div>
         {sections.map((s) => (
           <div key={s.title} className="flex flex-col gap-0.5">
             <div className="px-3 pt-4 pb-1.5 text-xs leading-4 font-semibold tracking-[0.06em] text-muted-foreground uppercase">{s.title}</div>
@@ -90,7 +90,7 @@ export function AppShell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-[60px] items-center justify-between gap-3 border-b border-border bg-topbar px-4 backdrop-blur-md backdrop-saturate-[1.4] lg:px-8">
-          <span className="lg:hidden"><Logo size="sm" /></span>
+          <Link to="/" className="inline-flex rounded-sm lg:hidden"><Logo size="sm" /></Link>
           <div className="ml-auto flex items-center gap-2.5">
             {user && (
               <span title={`${user.firstName} ${user.lastName}`} className="inline-flex size-9 flex-none items-center justify-center rounded-full bg-secondary font-display text-[13px] leading-none font-semibold text-primary">

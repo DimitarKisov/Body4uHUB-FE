@@ -15,6 +15,12 @@ export function RequireRole({ role }: { role: string }) {
   return <Outlet />;
 }
 
+/** "/" (the logo link): signed in → profile, otherwise → login. */
+export function HomeRedirect() {
+  const { isAuthenticated } = useAuth();
+  return <Navigate to={isAuthenticated ? "/profile" : "/login"} replace />;
+}
+
 /** Public auth screens: a signed-in user goes back to the page RequireAuth sent them from, else the profile. */
 export function GuestOnly() {
   const { isAuthenticated } = useAuth();
