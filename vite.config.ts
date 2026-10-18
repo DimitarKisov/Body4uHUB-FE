@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
@@ -9,6 +10,13 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./src/test/setup.ts'],
+      css: false,
+      restoreMocks: true,
+      unstubGlobals: true,
+    },
     server: {
       // 3000 = Cors:AllowedOrigins and App:FrontendUrl in backend appsettings.Local.json (confirm-email links point here).
       // Explicit IPv4: "localhost" made Vite listen on ::1 only, while Chrome on Windows tries 127.0.0.1 first;

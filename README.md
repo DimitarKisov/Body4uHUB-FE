@@ -17,6 +17,7 @@ npm run dev          # http://localhost:3000
 
 - `npm run build` — type-check + production build
 - `npm run lint` — oxlint
+- `npm test` — Vitest (jsdom + Testing Library), once; `npm run test:watch` while working. Helpers: `src/test/utils.tsx` (`renderScreen`, `mockApi`, `signIn`, `tr`)
 - `npm run preview` — serve the production build
 
 ## Layout
