@@ -1,5 +1,5 @@
 // Screen 7 · Смяна на парола — POST /api/users/me/change-password (design: ui_kits/identity/AccountScreens.jsx → ChangePasswordScreen).
-// 422 wrong current password → under "Текуща парола" · 400 → field errors · 401 global sign-out · 404 → sign out · other → banner.
+// 422 wrong current password → under "Текуща парола" · 400 → field errors · 401 global sign-out · 404 → sign out · 429 → banner + submit locked · other → banner.
 // Success → toast + empty form; the session (JWT) stays valid, so the user stays signed in.
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -28,6 +28,8 @@ export function ChangePasswordPage() {
   const { t } = useTranslation();
   const { signOut } = useAuth();
   const [banner, setBanner] = useState<BannerState>(null);
+  // 429 (5 per 15 min per user): keep submit locked, as on registration.
+  const [locked, setLocked] = useState(false);
 
   const {
     register,
@@ -54,6 +56,7 @@ export function ChangePasswordPage() {
         for (const [field, key] of Object.entries(ui.fields)) setError(field as keyof PasswordForm, { message: key });
       } else if (ui.kind === "banner") {
         setBanner(ui);
+        if (status === 429) setLocked(true);
       }
     }
   }
@@ -78,7 +81,7 @@ export function ChangePasswordPage() {
             <PasswordChecklist value={newPassword} showErrors={isSubmitted} />
           </div>
           <div className="mt-1.5 flex justify-end">
-            <Button type="submit" loading={isSubmitting}>
+            <Button type="submit" loading={isSubmitting} disabled={locked}>
               {t("pw.submit")}
             </Button>
           </div>
