@@ -20,10 +20,15 @@ import { formatDate, formatPhone } from "@/lib/format";
 import { RolesCard, type PageBanner } from "@/pages/admin/RolesCard";
 import { TrainerCard } from "@/pages/admin/TrainerCard";
 
+// Keyed by id: moving to another user starts with a fresh banner and fresh card state (role picks, open dialog).
 export function UserDetailsPage() {
+  const { id = "" } = useParams();
+  return <UserDetails key={id} id={id} />;
+}
+
+function UserDetails({ id }: { id: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { id = "" } = useParams();
   const { data: user, error, isFetching, refetch } = useQuery({ queryKey: userQueryKey(id), queryFn: () => getUser(id) });
   const back = { label: t("users.title"), onClick: () => navigate("/admin/users") };
   const [banner, setBanner] = useState<PageBanner>(null);

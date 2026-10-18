@@ -1,4 +1,5 @@
 // Signed-in shell. ≥1024px: 248px sidebar + sticky 60px top bar. <1024px: top bar with logo + fixed 64px bottom nav.
+import { Suspense } from "react";
 import { CalendarDays, FileText, KeyRound, LogOut, User, Users, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -98,7 +99,7 @@ export function AppShell() {
           </div>
         </header>
         <main className="mx-auto w-full max-w-[1120px] flex-1 px-4 pt-6 pb-24 lg:px-8 lg:pt-10 lg:pb-16">
-          <Outlet />
+          <Suspense fallback={null}><Outlet /></Suspense>
         </main>
       </div>
 

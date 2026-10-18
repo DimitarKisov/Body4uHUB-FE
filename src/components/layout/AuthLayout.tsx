@@ -1,5 +1,5 @@
 // Public screens. Mobile: single column, logo on top. ≥1024px: graphite brand panel (5fr) + form (6fr).
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet } from "react-router-dom";
 import { Logo } from "@/components/brand/Logo";
@@ -18,7 +18,7 @@ export function AuthLayout({ children }: { children?: ReactNode }) {
       </aside>
       <div className="flex flex-col px-5 pt-5 pb-8 lg:px-12 lg:py-8">
         <div className="lg:hidden"><Link to="/" className="inline-flex rounded-sm"><Logo size="sm" /></Link></div>
-        <main className="m-auto w-full max-w-[420px] py-10">{children ?? <Outlet />}</main>
+        <main className="m-auto w-full max-w-[420px] py-10">{children ?? <Suspense fallback={null}><Outlet /></Suspense>}</main>
       </div>
     </div>
   );

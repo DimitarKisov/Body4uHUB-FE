@@ -1,3 +1,4 @@
+import { lazy, type ComponentType } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { GuestOnly, RequireAuth, RequireRole } from "@/auth/guards";
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary";
@@ -6,18 +7,24 @@ import { AppShell } from "@/components/layout/AppShell";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { MODULES } from "@/lib/modules";
-import { CheckEmailPage } from "@/pages/auth/CheckEmailPage";
-import { ConfirmEmailPage } from "@/pages/auth/ConfirmEmailPage";
-import { LoginPage } from "@/pages/auth/LoginPage";
-import { RegisterPage } from "@/pages/auth/RegisterPage";
-import { ResendConfirmationPage } from "@/pages/auth/ResendConfirmationPage";
-import { ChangePasswordPage } from "@/pages/account/ChangePasswordPage";
-import { EditProfilePage } from "@/pages/account/EditProfilePage";
-import { ProfilePage } from "@/pages/account/ProfilePage";
-import { UserDetailsPage } from "@/pages/admin/UserDetailsPage";
-import { UsersPage } from "@/pages/admin/UsersPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { SoonPage } from "@/pages/SoonPage";
+
+// Public landing pages load eagerly; everything else is a separate chunk (forms pull in zod + react-hook-form).
+// Layouts wrap their <Outlet /> in <Suspense>, so the shell stays on screen while a chunk loads.
+const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) =>
+  lazy(() => load().then((m) => ({ default: m[name] })));
+
+const RegisterPage = page(() => import("@/pages/auth/RegisterPage"), "RegisterPage");
+const CheckEmailPage = page(() => import("@/pages/auth/CheckEmailPage"), "CheckEmailPage");
+const LoginPage = page(() => import("@/pages/auth/LoginPage"), "LoginPage");
+const ResendConfirmationPage = page(() => import("@/pages/auth/ResendConfirmationPage"), "ResendConfirmationPage");
+const ConfirmEmailPage = page(() => import("@/pages/auth/ConfirmEmailPage"), "ConfirmEmailPage");
+const ProfilePage = page(() => import("@/pages/account/ProfilePage"), "ProfilePage");
+const EditProfilePage = page(() => import("@/pages/account/EditProfilePage"), "EditProfilePage");
+const ChangePasswordPage = page(() => import("@/pages/account/ChangePasswordPage"), "ChangePasswordPage");
+const UsersPage = page(() => import("@/pages/admin/UsersPage"), "UsersPage");
+const UserDetailsPage = page(() => import("@/pages/admin/UserDetailsPage"), "UserDetailsPage");
 
 export default function App() {
   const { pathname } = useLocation();
