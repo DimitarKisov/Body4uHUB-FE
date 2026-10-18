@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function PageHeader({ eyebrow, title, description, actions, back }: {
-  eyebrow?: string; title: string; description?: ReactNode; actions?: ReactNode; back?: { label: string; onClick: () => void };
+  eyebrow?: string; title: ReactNode; description?: ReactNode; actions?: ReactNode; back?: { label: string; onClick: () => void };
 }) {
   return (
     <div className="mb-5 sm:mb-6 flex flex-wrap items-end justify-between gap-4">

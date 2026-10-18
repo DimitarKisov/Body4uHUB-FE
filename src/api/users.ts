@@ -48,3 +48,7 @@ export interface UserListItem {
 /** Admin only. 200 PagedResult (ordered by registration date) · 400 bad page/size · 401 (global: sign out) · 403 not an admin. */
 export const getUsers = (page: number, pageSize: number) => api<PagedResult<UserListItem>>(`/api/users?page=${page}&pageSize=${pageSize}`);
 export const usersQueryKey = (page: number, pageSize: number) => ["users", "list", page, pageSize] as const;
+
+/** Admin only. 200 UserDto · 401 (global: sign out) · 403 not an admin · 404 no such user (also for a malformed id). */
+export const getUser = (id: string) => api<UserDto>(`/api/users/${encodeURIComponent(id)}`);
+export const userQueryKey = (id: string) => ["users", "detail", id] as const;
