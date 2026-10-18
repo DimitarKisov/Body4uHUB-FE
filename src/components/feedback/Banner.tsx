@@ -1,6 +1,6 @@
 // Inline alert (design: components/feedback/Banner.jsx). Tinted bg, no border, 20px tone icon.
 import type { HTMLAttributes, ReactNode } from "react";
-import { CircleAlert, CircleCheck, Info, TriangleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type BannerTone = "info" | "success" | "warning" | "error" | "neutral";
@@ -17,10 +17,13 @@ interface BannerProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   tone?: BannerTone;
   title?: ReactNode;
   actions?: ReactNode;
+  /** Overrides the tone icon (design: Banner `icon`). */
+  icon?: LucideIcon;
 }
 
-export function Banner({ tone = "info", title, actions, children, className, ...rest }: BannerProps) {
-  const { bg, icon, Icon } = TONE[tone];
+export function Banner({ tone = "info", title, actions, icon: CustomIcon, children, className, ...rest }: BannerProps) {
+  const { bg, icon, Icon: ToneIcon } = TONE[tone];
+  const Icon = CustomIcon ?? ToneIcon;
   return (
     <div role={tone === "error" || tone === "warning" ? "alert" : "status"} className={cn("flex items-start gap-3 rounded-lg px-3.5 py-3 text-sm sm:px-4 sm:py-3.5", bg, className)} {...rest}>
       <Icon className={cn("mt-px size-5 shrink-0", icon)} />

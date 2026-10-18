@@ -11,6 +11,9 @@ export default defineConfig(({ mode }) => {
     resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
     server: {
       // 3000 = Cors:AllowedOrigins and App:FrontendUrl in backend appsettings.Local.json (confirm-email links point here).
+      // Explicit IPv4: "localhost" made Vite listen on ::1 only, while Chrome on Windows tries 127.0.0.1 first;
+      // a refused loopback connection takes ~2s on Windows before falling back → every new connection was +2s.
+      host: '127.0.0.1',
       port: 3000,
       strictPort: true,
       proxy: {

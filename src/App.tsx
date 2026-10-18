@@ -9,6 +9,7 @@ import { CheckEmailPage } from "@/pages/auth/CheckEmailPage";
 import { ConfirmEmailPage } from "@/pages/auth/ConfirmEmailPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
+import { ResendConfirmationPage } from "@/pages/auth/ResendConfirmationPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { Placeholder } from "@/pages/Placeholder";
 import { SoonPage } from "@/pages/SoonPage";
@@ -24,7 +25,7 @@ export default function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/register/check-email" element={<CheckEmailPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/resend-confirmation" element={<Placeholder auth titleKey="resend.title" />} />
+            <Route path="/resend-confirmation" element={<ResendConfirmationPage />} />
           </Route>
           {/* Reachable while signed in too: the link comes from an email. */}
           <Route path="/confirm-email" element={<ConfirmEmailPage />} />
