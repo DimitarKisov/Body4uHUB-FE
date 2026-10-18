@@ -43,6 +43,8 @@
   --placeholder: #9E9B92;   /* placeholders, inert "скоро" nav */
   --topbar-bg: rgb(243 242 238 / .86);
   --overlay: rgb(26 27 24 / .48);
+  --toast-error: #F07A7A;   /* toast icons on the dark surface (design: components.css .b4u-toast--*) */
+  --toast-info: #8FB0F0;
   --radius: 10px;
 }
 
@@ -81,6 +83,8 @@
   --color-placeholder: var(--placeholder);
   --color-topbar: var(--topbar-bg);
   --color-overlay: var(--overlay);
+  --color-toast-error: var(--toast-error);
+  --color-toast-info: var(--toast-info);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-success: var(--success);       --color-success-foreground: var(--success-foreground); --color-success-subtle: var(--success-subtle);

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { GuestOnly, RequireAuth, RequireRole } from "@/auth/guards";
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary";
+import { Toaster } from "@/components/feedback/Toaster";
 import { AppShell } from "@/components/layout/AppShell";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
@@ -10,6 +11,7 @@ import { ConfirmEmailPage } from "@/pages/auth/ConfirmEmailPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { ResendConfirmationPage } from "@/pages/auth/ResendConfirmationPage";
+import { EditProfilePage } from "@/pages/account/EditProfilePage";
 import { ProfilePage } from "@/pages/account/ProfilePage";
 import { HomePage } from "@/pages/home/HomePage";
 import { Placeholder } from "@/pages/Placeholder";
@@ -20,6 +22,7 @@ export default function App() {
   return (
     // resetKey: navigating to another screen clears a previous crash.
     <ErrorBoundary resetKey={pathname}>
+      <Toaster />
       <Routes>
         <Route element={<AuthLayout />}>
           <Route element={<GuestOnly />}>
@@ -35,7 +38,7 @@ export default function App() {
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/profile/edit" element={<Placeholder titleKey="edit.title" />} />
+            <Route path="/profile/edit" element={<EditProfilePage />} />
             <Route path="/security" element={<Placeholder titleKey="pw.title" />} />
             <Route element={<RequireRole role="Administrator" />}>
               <Route path="/admin/users" element={<Placeholder titleKey="users.title" />} />
