@@ -1,37 +1,44 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { GuestOnly, RequireAuth, RequireRole } from "@/auth/guards";
+import { ErrorBoundary } from "@/components/feedback/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import { CheckEmailPage } from "@/pages/auth/CheckEmailPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
+import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { Placeholder } from "@/pages/Placeholder";
 
 export default function App() {
+  const { pathname } = useLocation();
   return (
-    <Routes>
-      <Route element={<AuthLayout />}>
-        <Route element={<GuestOnly />}>
-          <Route path="/register" element={<Placeholder auth titleKey="register.title" />} />
-          <Route path="/register/check-email" element={<Placeholder auth titleKey="check.title" />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/resend-confirmation" element={<Placeholder auth titleKey="resend.title" />} />
+    // resetKey: navigating to another screen clears a previous crash.
+    <ErrorBoundary resetKey={pathname}>
+      <Routes>
+        <Route element={<AuthLayout />}>
+          <Route element={<GuestOnly />}>
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/register/check-email" element={<CheckEmailPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/resend-confirmation" element={<Placeholder auth titleKey="resend.title" />} />
+          </Route>
+          {/* Reachable while signed in too: the link comes from an email. */}
+          <Route path="/confirm-email" element={<Placeholder auth titleKey="confirm.loading" />} />
         </Route>
-        {/* Reachable while signed in too: the link comes from an email. */}
-        <Route path="/confirm-email" element={<Placeholder auth titleKey="confirm.loading" />} />
-      </Route>
 
-      <Route element={<RequireAuth />}>
-        <Route element={<AppShell />}>
-          <Route path="/profile" element={<Placeholder titleKey="profile.title" />} />
-          <Route path="/profile/edit" element={<Placeholder titleKey="edit.title" />} />
-          <Route path="/security" element={<Placeholder titleKey="pw.title" />} />
-          <Route element={<RequireRole role="Administrator" />}>
-            <Route path="/admin/users" element={<Placeholder titleKey="users.title" />} />
-            <Route path="/admin/users/:id" element={<Placeholder titleKey="user.details" />} />
+        <Route element={<RequireAuth />}>
+          <Route element={<AppShell />}>
+            <Route path="/profile" element={<Placeholder titleKey="profile.title" />} />
+            <Route path="/profile/edit" element={<Placeholder titleKey="edit.title" />} />
+            <Route path="/security" element={<Placeholder titleKey="pw.title" />} />
+            <Route element={<RequireRole role="Administrator" />}>
+              <Route path="/admin/users" element={<Placeholder titleKey="users.title" />} />
+              <Route path="/admin/users/:id" element={<Placeholder titleKey="user.details" />} />
+            </Route>
           </Route>
         </Route>
-      </Route>
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </ErrorBoundary>
   );
 }

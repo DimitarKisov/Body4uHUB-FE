@@ -1,6 +1,17 @@
 // Identity API — AuthController (backend/Body4uHUB.Identity.Api/Controllers/AuthController.cs).
 import { api } from "@/api/client";
-import type { AuthResponseDto } from "@/api/types";
+import type { AuthResponseDto, UserDto } from "@/api/types";
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string | null;
+}
+
+/** 201 UserDto (confirmation email sent) · 400 validation · 409 email exists · 429 (5 per hour per IP). */
+export const register = (body: RegisterRequest) => api<UserDto>("/api/auth/register", { method: "POST", body, auth: false });
 
 export interface LoginRequest {
   email: string;

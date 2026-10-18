@@ -1,5 +1,5 @@
 // Password input with show/hide toggle (design: components/forms/PasswordField.jsx).
-// TODO: PasswordChecklist for new passwords (register, change password).
+// New passwords: autoComplete="new-password" and render <PasswordChecklist> below it.
 import { forwardRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
