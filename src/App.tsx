@@ -14,6 +14,7 @@ import { ResendConfirmationPage } from "@/pages/auth/ResendConfirmationPage";
 import { ChangePasswordPage } from "@/pages/account/ChangePasswordPage";
 import { EditProfilePage } from "@/pages/account/EditProfilePage";
 import { ProfilePage } from "@/pages/account/ProfilePage";
+import { UsersPage } from "@/pages/admin/UsersPage";
 import { HomePage } from "@/pages/home/HomePage";
 import { Placeholder } from "@/pages/Placeholder";
 import { SoonPage } from "@/pages/SoonPage";
@@ -42,7 +43,7 @@ export default function App() {
             <Route path="/profile/edit" element={<EditProfilePage />} />
             <Route path="/security" element={<ChangePasswordPage />} />
             <Route element={<RequireRole role="Administrator" />}>
-              <Route path="/admin/users" element={<Placeholder titleKey="users.title" />} />
+              <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/users/:id" element={<Placeholder titleKey="user.details" />} />
             </Route>
           </Route>

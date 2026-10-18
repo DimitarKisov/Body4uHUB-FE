@@ -22,3 +22,29 @@ export interface ChangePasswordRequest {
 
 /** 204 · 400 validation (incl. new = current) · 401 (global: sign out) · 404 user no longer exists · 422 wrong current password. */
 export const changePassword = (body: ChangePasswordRequest) => api("/api/users/me/change-password", { method: "POST", body });
+
+/** Shared PagedResult<T> (Body4uHUB.Shared.Application). */
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+/** GetAllUsersResponse — no roles (the "Роли" column is reserved). */
+export interface UserListItem {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string | null;
+  createdAt: string;
+  isEmailConfirmed: boolean;
+}
+
+/** Admin only. 200 PagedResult (ordered by registration date) · 400 bad page/size · 401 (global: sign out) · 403 not an admin. */
+export const getUsers = (page: number, pageSize: number) => api<PagedResult<UserListItem>>(`/api/users?page=${page}&pageSize=${pageSize}`);
+export const usersQueryKey = (page: number, pageSize: number) => ["users", "list", page, pageSize] as const;
