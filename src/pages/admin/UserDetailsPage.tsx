@@ -1,20 +1,23 @@
 // Screen 9 · Детайли за потребител (admin) — GET /api/users/{id} (design: ui_kits/identity/AdminScreens.jsx → UserDetailsScreen).
 // 401 global sign-out · 403 "Нямаш достъп" · 404 / 500 / network → error state (+ retry unless 404).
-// Role assignment (MultiSelect + GET /api/roles) and the trainer card come in the next steps.
+// Actions report errors in one banner above the cards (RolesCard; the trainer card comes next).
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { CircleAlert, RefreshCw, Shield } from "lucide-react";
 import { ApiError } from "@/api/client";
 import { getUser, userQueryKey } from "@/api/users";
+import { Banner } from "@/components/feedback/Banner";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DescriptionList } from "@/components/ui/description-list";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmailStatus, RoleBadge } from "@/components/user/badges";
+import { EmailStatus } from "@/components/user/badges";
 import { formatDate, formatPhone } from "@/lib/format";
+import { RolesCard, type PageBanner } from "@/pages/admin/RolesCard";
 
 export function UserDetailsPage() {
   const { t } = useTranslation();
@@ -22,6 +25,7 @@ export function UserDetailsPage() {
   const { id = "" } = useParams();
   const { data: user, error, isFetching, refetch } = useQuery({ queryKey: userQueryKey(id), queryFn: () => getUser(id) });
   const back = { label: t("users.title"), onClick: () => navigate("/admin/users") };
+  const [banner, setBanner] = useState<PageBanner>(null);
 
   if (!user) {
     const status = error instanceof ApiError ? error.problem.status : null;
@@ -75,6 +79,12 @@ export function UserDetailsPage() {
     <>
       <PageHeader back={back} eyebrow={t("nav.admin")} title={`${user.firstName} ${user.lastName}`} description={<span className="[overflow-wrap:anywhere]">{user.email}</span>} />
 
+      {banner && (
+        <Banner tone={banner.tone} title={banner.titleKey && t(banner.titleKey)} className="mb-4">
+          {t(banner.textKey)}
+        </Banner>
+      )}
+
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,380px),1fr))] items-start gap-4">
         <Card title={t("user.details")}>
           <DescriptionList
@@ -100,13 +110,7 @@ export function UserDetailsPage() {
           />
         </Card>
 
-        <Card title={t("user.roles")} description={t("user.roles.lead")}>
-          <div className="flex flex-wrap gap-1.5">
-            {user.roles.map((r) => (
-              <RoleBadge key={r.id} role={r.name} />
-            ))}
-          </div>
-        </Card>
+        <RolesCard user={user} onProblem={setBanner} />
       </div>
     </>
   );

@@ -52,3 +52,7 @@ export const usersQueryKey = (page: number, pageSize: number) => ["users", "list
 /** Admin only. 200 UserDto · 401 (global: sign out) · 403 not an admin · 404 no such user (also for a malformed id). */
 export const getUser = (id: string) => api<UserDto>(`/api/users/${encodeURIComponent(id)}`);
 export const userQueryKey = (id: string) => ["users", "detail", id] as const;
+
+/** Admin only. 204 · 400 empty list · 401 · 403 · 404 user or a role doesn't exist · 422 Trainer (only via "Направи треньор"). Roles the user has are skipped. */
+export const addUserRoles = (userId: string, roleIds: string[]) =>
+  api(`/api/users/${encodeURIComponent(userId)}/roles`, { method: "POST", body: { roleIds } });
