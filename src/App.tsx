@@ -11,6 +11,7 @@ import { ConfirmEmailPage } from "@/pages/auth/ConfirmEmailPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { ResendConfirmationPage } from "@/pages/auth/ResendConfirmationPage";
+import { ChangePasswordPage } from "@/pages/account/ChangePasswordPage";
 import { EditProfilePage } from "@/pages/account/EditProfilePage";
 import { ProfilePage } from "@/pages/account/ProfilePage";
 import { HomePage } from "@/pages/home/HomePage";
@@ -39,7 +40,7 @@ export default function App() {
           <Route element={<AppShell />}>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/edit" element={<EditProfilePage />} />
-            <Route path="/security" element={<Placeholder titleKey="pw.title" />} />
+            <Route path="/security" element={<ChangePasswordPage />} />
             <Route element={<RequireRole role="Administrator" />}>
               <Route path="/admin/users" element={<Placeholder titleKey="users.title" />} />
               <Route path="/admin/users/:id" element={<Placeholder titleKey="user.details" />} />

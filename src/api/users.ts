@@ -14,3 +14,11 @@ export interface EditUserRequest {
 
 /** 204 · 400 validation · 401 (global: sign out) · 404 user no longer exists · 422 domain rule broken. Email can't be changed. */
 export const updateMe = (body: EditUserRequest) => api("/api/users/me", { method: "PUT", body });
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/** 204 · 400 validation (incl. new = current) · 401 (global: sign out) · 404 user no longer exists · 422 wrong current password. */
+export const changePassword = (body: ChangePasswordRequest) => api("/api/users/me/change-password", { method: "POST", body });

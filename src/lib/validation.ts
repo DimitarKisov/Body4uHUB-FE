@@ -28,4 +28,6 @@ export const phoneNumber = z
 export const registerSchema = z.object({ firstName: name("firstName"), lastName: name("lastName"), email, phoneNumber, password });
 export const loginSchema = z.object({ email, password: z.string().min(1, "v.password.required") });
 export const profileSchema = z.object({ firstName: name("firstName"), lastName: name("lastName"), phoneNumber });
-export const changePasswordSchema = z.object({ currentPassword: z.string().min(1, "v.password.required"), newPassword: password });
+export const changePasswordSchema = z
+  .object({ currentPassword: z.string().min(1, "v.currentPassword.required"), newPassword: password })
+  .refine((v) => v.newPassword !== v.currentPassword, { message: "pw.err.same", path: ["newPassword"] });
