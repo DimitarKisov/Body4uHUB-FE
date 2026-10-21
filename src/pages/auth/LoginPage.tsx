@@ -1,10 +1,12 @@
 // Screen 2 · Вход — POST /api/auth/login (design: ui_kits/identity/AuthScreens.jsx → LoginScreen).
 // 401 → generic credentials banner · 403 → unconfirmed warning + resend · 429 → 60s countdown · 400 → field errors.
+// ?reason=expired|deleted|reset → banner until another one replaces it; ?returnTo= is handled by GuestOnly after sign-in.
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
+import { Clock } from "lucide-react";
 import type { z } from "zod";
 import { login, resendConfirmation } from "@/api/auth";
 import { ApiError } from "@/api/client";
@@ -13,7 +15,6 @@ import { Banner } from "@/components/feedback/Banner";
 import { PasswordField } from "@/components/forms/PasswordField";
 import { TextField } from "@/components/forms/TextField";
 import { AuthHead } from "@/components/layout/AuthHead";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { mapProblem } from "@/lib/problem";
 import { loginSchema } from "@/lib/validation";
@@ -23,6 +24,15 @@ type BannerState = { tone: "error" | "warning"; titleKey?: string; textKey: stri
 type Unconfirmed = null | "idle" | "sending" | "sent";
 
 const RATE_LIMIT_SECONDS = 60; // backend: 5 attempts per 1-minute fixed window per IP
+
+const REASON_BANNER = {
+  expired: { tone: "info", icon: Clock },
+  deleted: { tone: "warning", icon: undefined },
+  reset: { tone: "success", icon: undefined },
+} as const;
+type Reason = keyof typeof REASON_BANNER;
+
+const linkClass = "font-medium text-foreground underline decoration-border-strong underline-offset-[3px] hover:decoration-foreground";
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -37,6 +47,7 @@ export function LoginPage() {
     handleSubmit,
     setError,
     getValues,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -48,6 +59,13 @@ export function LoginPage() {
     const id = window.setTimeout(() => setWait((s) => s - 1), 1000);
     return () => window.clearTimeout(id);
   }, [wait]);
+
+  const reasonParam = params.get("reason");
+  const reason = reasonParam && reasonParam in REASON_BANNER ? (reasonParam as Reason) : null;
+  const showReason = reason && !banner && !unconfirmed && wait === 0;
+
+  const typed = useWatch({ control, name: "email" }).trim();
+  const forgotTo = typed ? `/forgot-password?email=${encodeURIComponent(typed)}` : "/forgot-password";
 
   async function onSubmit(values: LoginForm) {
     setBanner(null);
@@ -80,6 +98,11 @@ export function LoginPage() {
     <>
       <AuthHead title={t("login.title")} lead={t("login.lead")} />
 
+      {showReason && (
+        <Banner tone={REASON_BANNER[reason].tone} icon={REASON_BANNER[reason].icon} title={t(`login.reason.${reason}.t`)} className="mb-5">
+          {t(`login.reason.${reason}`)}
+        </Banner>
+      )}
       {wait > 0 && (
         <Banner tone="error" title={t("login.err.429.t")} className="mb-5">
           {t("login.err.429", { s: wait })}
@@ -117,11 +140,10 @@ export function LoginPage() {
         />
         <div className="flex flex-col gap-2">
           <PasswordField label={t("f.password")} error={errors.password?.message} {...register("password")} />
-          {/* Reserved: becomes a link to /forgot-password later. */}
-          <span title={t("common.soon")} className="inline-flex items-center gap-1.5 self-end text-[13px] text-muted-foreground">
-            <span className="underline decoration-border-strong underline-offset-[3px]">{t("login.forgot")}</span>
-            <Badge tone="outline" className="h-[18px] px-1.5 text-[10px]">{t("common.soon")}</Badge>
-          </span>
+          {/* Carries the typed email to the forgot-password form. */}
+          <Link to={forgotTo} className={`self-end py-1.5 text-[13px] ${linkClass}`}>
+            {t("login.forgot")}
+          </Link>
         </div>
         <Button type="submit" size="lg" className="w-full" loading={isSubmitting} disabled={wait > 0}>
           {wait > 0 ? `${t("login.submit")} · ${wait} сек.` : t("login.submit")}
@@ -130,7 +152,7 @@ export function LoginPage() {
 
       <p className="mt-8 text-center text-sm text-body">
         {t("login.noAccount")}{" "}
-        <Link to="/register" className="font-medium text-foreground underline decoration-border-strong underline-offset-[3px] hover:decoration-foreground">
+        <Link to="/register" className={linkClass}>
           {t("login.toRegister")}
         </Link>
       </p>

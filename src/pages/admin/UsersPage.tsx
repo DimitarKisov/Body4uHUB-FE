@@ -1,6 +1,6 @@
 // Screen 8 · Потребители (admin) — GET /api/users?page=&pageSize= (design: ui_kits/identity/AdminScreens.jsx → UsersScreen).
 // Page + size live in the URL; changing the size resets to page 1. 401 global sign-out · 403 "Нямаш достъп" · other → error + retry.
-// Below sm the table is a tappable list (design 2026-10-18 mobile pass): name, then email · date · confirmed; phone hidden.
+// Below sm the table is a tappable list (design 2026-10-18 mobile pass): name, then email · date · confirmed · roles; phone hidden.
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { RoleBadges } from "@/components/user/badges";
 import { formatDate, formatPhone } from "@/lib/format";
 import { readPaging } from "@/lib/pagination";
 
@@ -61,7 +62,7 @@ export function UsersPage() {
           </Badge>
         ),
     },
-    { key: "roles", header: t("users.col.roles"), placeholder: true, render: () => t("common.soon") },
+    { key: "roles", header: t("users.col.roles"), render: (u) => <RoleBadges roles={u.roles} /> },
   ];
 
   return (

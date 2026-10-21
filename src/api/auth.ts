@@ -28,3 +28,15 @@ export const confirmEmail = (email: string, token: string) =>
 /** 204 always (even for unknown emails) · 400 validation · 429 (3 per 15 min per IP). */
 export const resendConfirmation = (email: string) =>
   api("/api/auth/resend-confirmation", { method: "POST", body: { email }, auth: false });
+
+/** 204 always (even for unknown emails) · 400 validation · 429 (3 per 15 min per IP). Link valid 1 hour, single use. */
+export const forgotPassword = (email: string) => api("/api/auth/forgot-password", { method: "POST", body: { email }, auth: false });
+
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  newPassword: string;
+}
+
+/** 204 · 400 validation · 422 link invalid, expired, already used or unknown email · 429 (5 per 15 min per IP). */
+export const resetPassword = (body: ResetPasswordRequest) => api("/api/auth/reset-password", { method: "POST", body, auth: false });

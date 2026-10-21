@@ -1,5 +1,5 @@
 // Screen 7 · Смяна на парола — POST /api/users/me/change-password (design: ui_kits/identity/AccountScreens.jsx → ChangePasswordScreen).
-// 422 wrong current password → under "Текуща парола" · 400 → field errors · 401 global sign-out · 404 → sign out · 429 → banner + submit locked · other → banner.
+// 422 wrong current password → under "Текуща парола" · 400 → field errors · 401 / 404 → global session dialog · 429 → banner + submit locked · other → banner.
 // Success → toast + empty form; the session (JWT) stays valid, so the user stays signed in.
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -8,7 +8,6 @@ import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { ApiError } from "@/api/client";
 import { changePassword } from "@/api/users";
-import { useAuth } from "@/auth/AuthContext";
 import { Banner } from "@/components/feedback/Banner";
 import { notify } from "@/components/feedback/notify";
 import { PasswordChecklist } from "@/components/forms/PasswordChecklist";
@@ -26,7 +25,6 @@ const EMPTY: PasswordForm = { currentPassword: "", newPassword: "" };
 
 export function ChangePasswordPage() {
   const { t } = useTranslation();
-  const { signOut } = useAuth();
   const [banner, setBanner] = useState<BannerState>(null);
   // 429 (5 per 15 min per user): keep submit locked, as on registration.
   const [locked, setLocked] = useState(false);
@@ -49,7 +47,7 @@ export function ChangePasswordPage() {
     } catch (e) {
       if (!(e instanceof ApiError)) throw e;
       const { status } = e.problem;
-      if (status === 404) return signOut();
+      if (status === 401 || status === 404) return; // the session dialog covers these
       if (status === 422) return setError("currentPassword", { message: "pw.err.wrong" }, { shouldFocus: true });
       const ui = mapProblem(e.problem, "password");
       if (ui.kind === "fields") {

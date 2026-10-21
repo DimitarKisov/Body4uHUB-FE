@@ -1,6 +1,6 @@
 // Admin data table (design: components/data/DataTable.jsx). Skeleton rows, empty slot, footer (Pagination).
 // Mobile-first: below sm (640px) the rows render as a stacked, tappable list — strong column = title,
-// the other columns = meta line (minus placeholder / hideOnMobile), chevron when rows are clickable.
+// the other columns = meta line (minus hideOnMobile), chevron when rows are clickable.
 import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,8 +12,6 @@ export interface DataTableColumn<T> {
   render: (row: T) => ReactNode;
   /** Primary column: graphite, 500; title of the mobile row. */
   strong?: boolean;
-  /** Dashed "скоро" column (reserved), e.g. Роли. */
-  placeholder?: boolean;
   /** Omit from the mobile list. */
   hideOnMobile?: boolean;
 }
@@ -34,7 +32,7 @@ interface DataTableProps<T> {
 
 function MobileList<T>({ columns, rows, rowKey, onRowClick, loading, skeletonRows }: DataTableProps<T> & { skeletonRows: number }) {
   const main = columns.find((c) => c.strong) ?? columns[0];
-  const meta = columns.filter((c) => c !== main && !c.placeholder && !c.hideOnMobile);
+  const meta = columns.filter((c) => c !== main && !c.hideOnMobile);
   const item = "grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 px-4 py-3.5 text-left";
 
   if (loading) {
@@ -89,7 +87,6 @@ function MobileList<T>({ columns, rows, rowKey, onRowClick, loading, skeletonRow
 
 const th = "border-b border-border bg-card px-4 py-3 text-left text-xs leading-4 font-semibold tracking-[0.06em] whitespace-nowrap text-muted-foreground uppercase";
 const td = "border-b border-border px-4 py-3.5 align-middle text-body group-last:border-b-0";
-const placeholderCell = "border-l border-dashed border-l-border text-border-strong";
 
 export function DataTable<T>(props: DataTableProps<T>) {
   const { columns, rows, rowKey, onRowClick, loading = false, skeletonRows = 5, empty, footer, caption } = props;
@@ -102,7 +99,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
           <thead>
             <tr>
               {columns.map((c) => (
-                <th key={c.key} className={cn(th, c.placeholder && placeholderCell)}>
+                <th key={c.key} className={th}>
                   {c.header}
                 </th>
               ))}
@@ -128,7 +125,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
                     onKeyDown={onRowClick && ((e) => e.key === "Enter" && onRowClick(row))}
                   >
                     {columns.map((c) => (
-                      <td key={c.key} className={cn(td, c.strong && "font-medium text-foreground", c.placeholder && placeholderCell)}>
+                      <td key={c.key} className={cn(td, c.strong && "font-medium text-foreground")}>
                         {c.render(row)}
                       </td>
                     ))}

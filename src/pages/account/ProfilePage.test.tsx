@@ -25,9 +25,10 @@ describe("ProfilePage", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("signs out when the account no longer exists (404)", async () => {
+  it("ends the session when the account no longer exists (404), without the generic error", async () => {
     mockApi({ status: 404 });
     renderScreen(<ProfilePage />, { url: "/profile" });
     await vi.waitFor(() => expect(sessionStorage.getItem("b4u.session")).toBeNull());
+    expect(screen.queryByText(tr("err.500.t"))).not.toBeInTheDocument();
   });
 });

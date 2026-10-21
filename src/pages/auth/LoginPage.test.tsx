@@ -55,6 +55,22 @@ describe("LoginPage", () => {
     expect(screen.getByRole("button", { name: /сек\./ })).toBeDisabled();
   });
 
+  it("links to the forgot-password form with the typed email", async () => {
+    renderScreen(<LoginPage />, { url: "/login" });
+    await userEvent.setup().type(screen.getByLabelText(tr("f.email")), "anna@body4u.bg");
+    expect(screen.getByRole("link", { name: tr("login.forgot") })).toHaveAttribute("href", "/forgot-password?email=anna%40body4u.bg");
+  });
+
+  it.each(["expired", "deleted", "reset"])("shows the ?reason=%s banner", (reason) => {
+    renderScreen(<LoginPage />, { url: `/login?reason=${reason}`, path: "/login" });
+    expect(screen.getByText(tr(`login.reason.${reason}.t`))).toBeInTheDocument();
+  });
+
+  it("ignores an unknown ?reason=", () => {
+    renderScreen(<LoginPage />, { url: "/login?reason=nope", path: "/login" });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
   it("prefills the email from ?email=", () => {
     renderScreen(<LoginPage />, { url: "/login?email=anna%40body4u.bg", path: "/login" });
     expect(screen.getByLabelText(tr("f.email"))).toHaveValue("anna@body4u.bg");

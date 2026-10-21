@@ -1,10 +1,12 @@
 // Signed-in shell. ≥1024px: 248px sidebar + sticky 60px top bar. <1024px: top bar with logo + fixed 64px bottom nav.
+// Also hosts the session notices: the warning banner above the page content and the "Сесията изтече" dialog.
 import { Suspense } from "react";
 import { CalendarDays, FileText, KeyRound, LogOut, User, Users, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { Logo } from "@/components/brand/Logo";
+import { SessionExpiredDialog, SessionWarning } from "@/components/feedback/SessionNotices";
 import { UserAvatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -99,6 +101,7 @@ export function AppShell() {
           </div>
         </header>
         <main className="mx-auto w-full max-w-[1120px] flex-1 px-4 pt-6 pb-24 lg:px-8 lg:pt-10 lg:pb-16">
+          <SessionWarning />
           <Suspense fallback={null}><Outlet /></Suspense>
         </main>
       </div>
@@ -106,6 +109,7 @@ export function AppShell() {
       <nav aria-label="Основна навигация" className="fixed inset-x-0 bottom-0 z-30 flex h-16 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
         {mobile.map((it) => <BottomNavItem key={it.id} item={it} />)}
       </nav>
+      <SessionExpiredDialog />
     </div>
   );
 }

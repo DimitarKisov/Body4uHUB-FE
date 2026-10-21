@@ -1,5 +1,7 @@
 // Session = { accessToken, user } from POST /api/auth/login. Kept in memory + sessionStorage.
-// JWT lives 60 min and there is no refresh token, so we sign out when `exp` passes.
+// JWT lives 60 min and there is no refresh token (design 2026-10-21 → "12 · Сесията"):
+// warning 5 min before `exp`; at `exp` or on any 401 → "expired"; 404 on /api/users/me → "deleted".
+// An ended session stays in memory, so the page stays behind <SessionDialog> until the user signs in again.
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { configureApi } from "@/api/client";
@@ -7,15 +9,22 @@ import type { AuthResponseDto, UserDto } from "@/api/types";
 import { tokenExpiry } from "@/auth/jwt";
 
 const STORAGE_KEY = "b4u.session";
+const SESSION_WARNING_MS = 5 * 60 * 1000;
+
+export type SessionState = "active" | "warning" | "expired" | "deleted";
 
 interface AuthState {
   accessToken: string | null;
   user: UserDto | null;
   isAuthenticated: boolean;
+  /** `exp` of the access token in ms, or null. */
+  expiresAt: number | null;
+  sessionState: SessionState;
   hasRole: (role: string) => boolean;
   signIn: (session: AuthResponseDto) => void;
   signOut: () => void;
   setUser: (user: UserDto) => void;
+  dismissWarning: () => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -34,11 +43,14 @@ function loadSession(): AuthResponseDto | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthResponseDto | null>(loadSession);
+  const [sessionState, setSessionState] = useState<SessionState>("active");
   const queryClient = useQueryClient();
+  const expiresAt = session ? tokenExpiry(session.accessToken) : null;
 
   const signOut = useCallback(() => {
     sessionStorage.removeItem(STORAGE_KEY);
     setSession(null);
+    setSessionState("active");
     // Cached server data belongs to the previous user (e.g. users/me) → drop it.
     queryClient.clear();
   }, [queryClient]);
@@ -46,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback((s: AuthResponseDto) => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     setSession(s);
+    setSessionState("active");
   }, []);
 
   const setUser = useCallback((user: UserDto) => {
@@ -57,31 +70,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Token getter reads the latest session; 401 on an authenticated call → sign out (guards redirect to /login).
-  useEffect(() => {
-    configureApi({ getToken: () => session?.accessToken ?? null, onUnauthorized: signOut });
-  }, [session, signOut]);
+  // A reload after this starts signed out; "deleted" wins over a later "expired" (e.g. a 401 from a query still in flight).
+  const endSession = useCallback((kind: "expired" | "deleted") => {
+    sessionStorage.removeItem(STORAGE_KEY);
+    setSessionState((s) => (s === "deleted" ? s : kind));
+  }, []);
 
-  // Auto sign-out at JWT expiry. TODO: "Сесията изтече" state (reserved, not designed yet).
+  const dismissWarning = useCallback(() => setSessionState((s) => (s === "warning" ? "active" : s)), []);
+
+  // Token getter reads the latest session. 401 / missing account → the dialog, not a redirect.
   useEffect(() => {
-    if (!session) return;
-    const exp = tokenExpiry(session.accessToken);
-    if (!exp) return;
-    const id = window.setTimeout(signOut, Math.max(0, exp - Date.now()));
-    return () => window.clearTimeout(id);
-  }, [session, signOut]);
+    configureApi({
+      getToken: () => session?.accessToken ?? null,
+      onUnauthorized: () => endSession("expired"),
+      onAccountGone: () => endSession("deleted"),
+    });
+  }, [session, endSession]);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+    const now = Date.now();
+    const warn = window.setTimeout(
+      () => setSessionState((s) => (s === "active" ? "warning" : s)),
+      Math.max(0, expiresAt - SESSION_WARNING_MS - now),
+    );
+    const expire = window.setTimeout(() => endSession("expired"), Math.max(0, expiresAt - now));
+    return () => {
+      window.clearTimeout(warn);
+      window.clearTimeout(expire);
+    };
+  }, [expiresAt, endSession]);
 
   const value = useMemo<AuthState>(
     () => ({
       accessToken: session?.accessToken ?? null,
       user: session?.user ?? null,
       isAuthenticated: !!session,
+      expiresAt,
+      sessionState,
       hasRole: (role) => !!session?.user.roles.some((r) => r.name === role),
       signIn,
       signOut,
       setUser,
+      dismissWarning,
     }),
-    [session, signIn, signOut, setUser],
+    [session, expiresAt, sessionState, signIn, signOut, setUser, dismissWarning],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

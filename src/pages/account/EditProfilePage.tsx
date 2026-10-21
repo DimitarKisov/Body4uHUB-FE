@@ -1,5 +1,5 @@
 // Screen 6 · Редакция на профила — PUT /api/users/me (design: ui_kits/identity/AccountScreens.jsx → EditProfileScreen).
-// 400 → field errors + banner · 401 global sign-out · 404 (account deleted) → sign out · 422 / 500 / network → banner · success → toast + /profile.
+// 400 → field errors + banner · 401 / 404 (account deleted) → global session dialog · 422 / 500 / network → banner · success → toast + /profile.
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,7 +30,7 @@ export function EditProfilePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   // RequireAuth guarantees a session; the profile screen keeps this copy in sync with GET /api/users/me.
-  const { user: sessionUser, setUser, signOut } = useAuth();
+  const { user: sessionUser, setUser } = useAuth();
   const user = sessionUser!;
   const [banner, setBanner] = useState<BannerState>(null);
 
@@ -58,7 +58,8 @@ export function EditProfilePage() {
       toProfile();
     } catch (e) {
       if (!(e instanceof ApiError)) throw e;
-      if (e.problem.status === 404) return signOut();
+      // The session dialog covers these; the form keeps its values underneath.
+      if (e.problem.status === 401 || e.problem.status === 404) return;
       const ui = mapProblem(e.problem, "profile");
       if (ui.kind === "fields") {
         for (const [field, key] of Object.entries(ui.fields)) setError(field as keyof EditInput, { message: key });

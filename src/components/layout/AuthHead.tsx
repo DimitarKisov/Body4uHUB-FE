@@ -1,5 +1,7 @@
 // Title + lead at the top of every auth screen (design: AuthScreens.jsx → AuthHead).
-export function AuthHead({ title, lead }: { title: string; lead?: string }) {
+import type { ReactNode } from "react";
+
+export function AuthHead({ title, lead }: { title: string; lead?: ReactNode }) {
   return (
     <div className="mb-7">
       <h1 className="text-[28px] leading-[34px]">{title}</h1>

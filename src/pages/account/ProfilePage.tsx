@@ -1,5 +1,5 @@
 // Screen 5 · Моят профил — GET /api/users/me (design: ui_kits/identity/AccountScreens.jsx → ProfileScreen).
-// 401 is handled globally and 404 (account deleted) here: both sign out → /login. Any other failure → error EmptyState with retry.
+// 401 and 404 (account deleted) are handled globally: the session dialog covers the page (skeleton stays). Any other failure → error EmptyState with retry.
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -45,20 +45,16 @@ function ProfileSkeleton() {
 
 export function ProfilePage() {
   const { t } = useTranslation();
-  const { setUser, signOut } = useAuth();
+  const { setUser } = useAuth();
   const { data: user, error, isPending, isError, isFetching, refetch } = useQuery({ queryKey: meQueryKey, queryFn: getMe });
   // Retry after an error shows the skeleton again; a background refetch with data on screen does not.
-  const loading = isPending || (!user && isError && isFetching);
+  const gone = error instanceof ApiError && (error.problem.status === 401 || error.problem.status === 404);
+  const loading = isPending || gone || (!user && isError && isFetching);
 
   // Keep the session copy (top bar avatar, role nav) in sync with the server.
   useEffect(() => {
     if (user) setUser(user);
   }, [user, setUser]);
-
-  // 404 = the account no longer exists although the token is still valid → treat like 401 (guards redirect to /login).
-  useEffect(() => {
-    if (error instanceof ApiError && error.problem.status === 404) signOut();
-  }, [error, signOut]);
 
   return (
     <>
@@ -79,7 +75,7 @@ export function ProfilePage() {
 
       {loading && <ProfileSkeleton />}
 
-      {!user && isError && !isFetching && (
+      {!user && isError && !gone && !isFetching && (
         <Card padded={false}>
           <EmptyState
             icon={<CircleAlert />}

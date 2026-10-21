@@ -20,6 +20,8 @@ const CheckEmailPage = page(() => import("@/pages/auth/CheckEmailPage"), "CheckE
 const LoginPage = page(() => import("@/pages/auth/LoginPage"), "LoginPage");
 const ResendConfirmationPage = page(() => import("@/pages/auth/ResendConfirmationPage"), "ResendConfirmationPage");
 const ConfirmEmailPage = page(() => import("@/pages/auth/ConfirmEmailPage"), "ConfirmEmailPage");
+const ForgotPasswordPage = page(() => import("@/pages/auth/ForgotPasswordPage"), "ForgotPasswordPage");
+const ResetPasswordPage = page(() => import("@/pages/auth/ResetPasswordPage"), "ResetPasswordPage");
 const ProfilePage = page(() => import("@/pages/account/ProfilePage"), "ProfilePage");
 const EditProfilePage = page(() => import("@/pages/account/EditProfilePage"), "EditProfilePage");
 const ChangePasswordPage = page(() => import("@/pages/account/ChangePasswordPage"), "ChangePasswordPage");
@@ -39,9 +41,11 @@ export default function App() {
             <Route path="/register/check-email" element={<CheckEmailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/resend-confirmation" element={<ResendConfirmationPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           </Route>
-          {/* Reachable while signed in too: the link comes from an email. */}
+          {/* Reachable while signed in too: the links come from an email. */}
           <Route path="/confirm-email" element={<ConfirmEmailPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         <Route element={<RequireAuth />}>

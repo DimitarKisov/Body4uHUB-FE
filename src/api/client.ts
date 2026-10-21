@@ -1,14 +1,17 @@
-// fetch wrapper: adds the bearer token, throws ProblemDetails on non-2xx, and signs out on 401 from authenticated calls.
+// fetch wrapper: adds the bearer token, throws ProblemDetails on non-2xx, and reports a dead session from authenticated calls:
+// 401 → expired, 404 on /api/users/me* → account gone.
 import type { ProblemDetails } from "@/lib/problem";
 
 const BASE = import.meta.env.VITE_API_BASE ?? "";
 
 let getToken: () => string | null = () => null;
 let onUnauthorized: () => void = () => {};
+let onAccountGone: () => void = () => {};
 
-export function configureApi(opts: { getToken: () => string | null; onUnauthorized: () => void }) {
+export function configureApi(opts: { getToken: () => string | null; onUnauthorized: () => void; onAccountGone: () => void }) {
   getToken = opts.getToken;
   onUnauthorized = opts.onUnauthorized;
+  onAccountGone = opts.onAccountGone;
 }
 
 export class ApiError extends Error {
@@ -49,6 +52,8 @@ export async function api<T = void>(path: string, { body, auth = true, headers, 
   }
 
   if (res.status === 401 && token) onUnauthorized();
+  // The /me endpoints answer 404 when the signed-in account no longer exists (the token is still valid).
+  if (res.status === 404 && token && /^\/api\/users\/me(\/|$)/.test(path)) onAccountGone();
 
   let problem: ProblemDetails = { status: res.status };
   try {

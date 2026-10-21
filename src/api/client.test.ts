@@ -3,10 +3,12 @@ import { api, ApiError, configureApi, NETWORK_ERROR } from "@/api/client";
 import { mockApi } from "@/test/utils";
 
 const onUnauthorized = vi.fn();
+const onAccountGone = vi.fn();
 
 beforeEach(() => {
   onUnauthorized.mockReset();
-  configureApi({ getToken: () => "token-123", onUnauthorized });
+  onAccountGone.mockReset();
+  configureApi({ getToken: () => "token-123", onUnauthorized, onAccountGone });
 });
 
 const statusOf = (p: Promise<unknown>) => p.then(() => null, (e: ApiError) => e.problem.status);
@@ -55,5 +57,14 @@ describe("api", () => {
     expect(onUnauthorized).not.toHaveBeenCalled();
     await statusOf(api("/api/users/me"));
     expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it("reports a missing account on 404 from the /me endpoints only", async () => {
+    mockApi({ status: 404 });
+    await statusOf(api("/api/users/u7"));
+    await statusOf(api("/api/users/meow"));
+    expect(onAccountGone).not.toHaveBeenCalled();
+    await statusOf(api("/api/users/me/change-password", { method: "POST" }));
+    expect(onAccountGone).toHaveBeenCalledOnce();
   });
 });

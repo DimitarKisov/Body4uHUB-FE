@@ -34,7 +34,7 @@ export interface PagedResult<T> {
   hasPrevious: boolean;
 }
 
-/** GetAllUsersResponse — no roles (the "Роли" column is reserved). */
+/** GetAllUsersResponse. `roles` = role names (design 2026-10-21 contract note). */
 export interface UserListItem {
   id: string;
   email: string;
@@ -43,6 +43,7 @@ export interface UserListItem {
   phoneNumber: string | null;
   createdAt: string;
   isEmailConfirmed: boolean;
+  roles: string[];
 }
 
 /** Admin only. 200 PagedResult (ordered by registration date) · 400 bad page/size · 401 (global: sign out) · 403 not an admin. */
