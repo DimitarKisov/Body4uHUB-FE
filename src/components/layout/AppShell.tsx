@@ -18,7 +18,8 @@ function useNav() {
   const isAdmin = hasRole("Administrator");
   const profile: NavItem = { id: "profile", to: "/profile", icon: User, label: t("nav.profile"), shortLabel: t("nav.profile.short") };
   const security: NavItem = { id: "security", to: "/security", icon: KeyRound, label: t("nav.security") };
-  const content: NavItem = { id: "content", icon: FileText, label: t("nav.content"), shortLabel: t("nav.content.short"), soon: true };
+  // Статии is a public page (PublicLayout); the link leaves the shell.
+  const content: NavItem = { id: "content", to: "/articles", icon: FileText, label: t("nav.articles") };
   const services: NavItem = { id: "services", icon: CalendarDays, label: t("nav.services"), shortLabel: t("nav.services.short"), soon: true };
   const users: NavItem = { id: "users", to: "/admin/users", icon: Users, label: t("nav.users") };
   const sections = [

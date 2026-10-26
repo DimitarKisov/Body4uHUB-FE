@@ -16,3 +16,12 @@ export function formatDate(iso: string): string {
 export function formatPhone(phone: string): string {
   return phone.replace(/^(\d{4})(\d{3})(\d{3})$/, "$1 $2 $3");
 }
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** dd.mm.yyyy, HH:mm in local time — the `title` of every <time>. */
+export function formatDateTime(iso: string): string {
+  const d = parseUtc(iso);
+  return `${formatDate(iso)}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+

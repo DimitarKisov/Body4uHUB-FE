@@ -25,6 +25,9 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       strictPort: true,
       proxy: {
+        // Content API (backend launchSettings: https://localhost:7002). Listed first: Vite tries the entries in order.
+        // The key is a RegExp tested against the whole URL, query string included (/api/articles?page=1).
+        '^/api/(articles|bookmarks|forums)([/?]|$)': { target: env.CONTENT_API_URL || 'https://localhost:7002', changeOrigin: true, secure: false },
         // Identity API (backend launchSettings: https://localhost:7001). Self-signed dev cert → secure: false.
         '/api': { target: env.IDENTITY_API_URL || 'https://localhost:7001', changeOrigin: true, secure: false },
       },

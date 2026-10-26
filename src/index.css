@@ -41,6 +41,11 @@
   --overlay: rgb(26 27 24 / .48);
   --toast-error: #F07A7A;   /* toast icons on the dark surface (design: components.css .b4u-toast--*) */
   --toast-info: #8FB0F0;
+  /* Article category covers (design 2026-10-26, content.css .ct-cover): lime-500 · green-50 · blue-50 · sand-300 */
+  --cat-training: #DDE9A8;
+  --cat-nutrition: #E4F2E8;
+  --cat-recovery: #E3EAF8;
+  --cat-other: #E0DED7;
   --radius: 10px;
 }
 
@@ -77,6 +82,10 @@
   --color-overlay: var(--overlay);
   --color-toast-error: var(--toast-error);
   --color-toast-info: var(--toast-info);
+  --color-cat-training: var(--cat-training);
+  --color-cat-nutrition: var(--cat-nutrition);
+  --color-cat-recovery: var(--cat-recovery);
+  --color-cat-other: var(--cat-other);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-success: var(--success);       --color-success-foreground: var(--success-foreground); --color-success-subtle: var(--success-subtle);
@@ -91,6 +100,7 @@
   --radius-md: var(--radius);              /* 10 */
   --radius-lg: calc(var(--radius) + 2px);  /* 12 */
 
+  --shadow-sm: 0 1px 2px rgb(26 27 24 / .06), 0 1px 1px rgb(26 27 24 / .04);
   --shadow-md: 0 6px 16px -6px rgb(26 27 24 / .14), 0 2px 4px rgb(26 27 24 / .05);
   --ease-out: cubic-bezier(.2, .8, .2, 1);
   --shadow-focus: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);

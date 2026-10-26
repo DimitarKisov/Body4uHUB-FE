@@ -10,8 +10,8 @@ npm run dev          # http://localhost:3000
 ```
 
 - Port **3000** is fixed: it matches `Cors:AllowedOrigins` and `App:FrontendUrl` (confirm-email links) in the backend's `appsettings.Local.json`.
-- `/api/*` is proxied to the Identity API at `https://localhost:7001`. Override with `IDENTITY_API_URL` in `.env.local` (see `.env.example`).
-- Start the backend first: `dotnet run --project ../backend/Body4uHUB.Identity.Api` (or from Visual Studio / Rider).
+- `/api/articles`, `/api/bookmarks`, `/api/forums` are proxied to the Content API at `https://localhost:7002` (`CONTENT_API_URL`); every other `/api/*` goes to the Identity API at `https://localhost:7001` (`IDENTITY_API_URL`). Override them in `.env.local` (see `.env.example`).
+- Start the backend first: `dotnet run --project ../backend/Body4uHUB.Identity.Api` and `../backend/Body4uHUB.Content.Api` (or from Visual Studio / Rider).
 
 ## Scripts
 

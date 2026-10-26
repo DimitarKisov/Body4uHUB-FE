@@ -27,6 +27,7 @@ const EditProfilePage = page(() => import("@/pages/account/EditProfilePage"), "E
 const ChangePasswordPage = page(() => import("@/pages/account/ChangePasswordPage"), "ChangePasswordPage");
 const UsersPage = page(() => import("@/pages/admin/UsersPage"), "UsersPage");
 const UserDetailsPage = page(() => import("@/pages/admin/UserDetailsPage"), "UserDetailsPage");
+const ArticlesPage = page(() => import("@/pages/content/ArticlesPage"), "ArticlesPage");
 
 export default function App() {
   const { pathname } = useLocation();
@@ -63,7 +64,8 @@ export default function App() {
         {/* Public, signed in or not. */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<HomePage />} />
-          {MODULES.map((m) => (
+          <Route path="/articles" element={<ArticlesPage />} />
+          {MODULES.filter((m) => m.soon).map((m) => (
             <Route key={m.id} path={m.to} element={<SoonPage module={m} />} />
           ))}
         </Route>

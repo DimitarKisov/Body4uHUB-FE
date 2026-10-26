@@ -16,7 +16,9 @@ import { cn } from "@/lib/utils";
 export function PublicHeader() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  // From a module page (Статии …) Вход comes back to it; from the home page GuestOnly picks the profile.
+  const loginTo = pathname === "/" ? "/login" : `/login?returnTo=${encodeURIComponent(pathname + search)}`;
   // The sheet remembers the page it was opened on, so navigating anywhere closes it.
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;
@@ -68,7 +70,7 @@ export function PublicHeader() {
             ) : (
               <>
                 <Button asChild variant="ghost" size="sm">
-                  <Link to="/login">{t("home.login")}</Link>
+                  <Link to={loginTo}>{t("home.login")}</Link>
                 </Button>
                 <Button asChild size="sm" className="hidden min-[900px]:inline-flex">
                   <Link to="/register">{t("home.register")}</Link>

@@ -247,5 +247,17 @@
   "home.foot.copy": "© 2026 Body4uHUB",
   "home.foot.tagline": "Сертифицирани треньори в цяла България",
   "soon.text": "Работим по тази част. Скоро ще е готова.",
-  "soon.home": "Към началото"
+  "soon.home": "Към началото",
+  "nav.articles": "Статии",
+  "cat.Training": "Тренировки",
+  "cat.Nutrition": "Хранене",
+  "cat.Recovery": "Възстановяване",
+  "cat.Other": "Друго",
+  "content.deletedUser": "Изтрит потребител",
+  "content.minutes": "{n} мин четене",
+  "articles.title": "Статии",
+  "articles.lead": "Тренировки, хранене и възстановяване — от треньорите в Body4uHUB.",
+  "articles.empty.t": "Все още няма статии",
+  "articles.empty": "Треньорите ни пишат първите. Провери отново скоро.",
+  "articles.loadErr.t": "Статиите не се заредиха"
 }

@@ -63,3 +63,16 @@ export const makeTrainer = (userId: string) => api<{ userId: string }>("/api/use
 
 /** Admin only. 204 (trainer profile + services are removed by the Services API via the TrainerRoleRevoked event) · 401 · 403 · 404 · 422 not a trainer. */
 export const removeTrainer = (userId: string) => api(`/api/users/trainers/${encodeURIComponent(userId)}`, { method: "DELETE" });
+
+/** PublicUserResponse — the name shown next to articles, comments and posts. */
+export interface PublicUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+export const PUBLIC_USERS_MAX_IDS = 50;
+
+/** Anonymous. 200 the users found (unknown / deleted ids are left out) · 400 no ids or more than 50 · 429 60 per minute per IP. */
+export const getPublicUsers = (ids: string[]) =>
+  api<PublicUser[]>(`/api/users/public?${ids.map((id) => `ids=${encodeURIComponent(id)}`).join("&")}`, { auth: false });
