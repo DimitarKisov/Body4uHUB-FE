@@ -163,17 +163,33 @@ describe("ArticlePage", () => {
       expect(toolbar()).not.toBeInTheDocument();
     });
 
-    it("delete asks first, then goes to the list", async () => {
+    it("delete asks first, then the author goes to Моите статии", async () => {
       signIn(trainer);
       const fetchMock = mockApi({ status: 200, body: article() }, { status: 200, body: [anna] }, { status: 204 });
-      open();
+      renderScreen(<ArticlePage />, { url: "/articles/7", path: "/articles/:id", probes: ["/articles/mine"] });
       await userEvent.click(await screen.findByRole("button", { name: tr("article.delete") }));
       const dialog = screen.getByRole("alertdialog", { name: tr("article.delete.t") });
       expect(dialog).toHaveTextContent("„Как да започнеш със силови тренировки“");
       await userEvent.click(within(dialog).getByRole("button", { name: tr("article.delete") }));
-      expect(await screen.findByTestId("location")).toHaveTextContent(/^\/articles$/);
+      expect(await screen.findByTestId("location")).toHaveTextContent(/^\/articles\/mine$/);
       const del = fetchMock.mock.calls.find(([, init]) => init?.method === "DELETE");
       expect(del?.[0]).toBe("/api/articles/7");
+    });
+
+    it("an admin deleting someone else's article goes to the public list", async () => {
+      signIn(admin);
+      mockApi({ status: 200, body: article() }, { status: 200, body: [anna] }, { status: 204 });
+      open();
+      await userEvent.click(await screen.findByRole("button", { name: tr("article.delete") }));
+      await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: tr("article.delete") }));
+      expect(await screen.findByTestId("location")).toHaveTextContent(/^\/articles$/);
+    });
+
+    it("Редактирай links to the editor", async () => {
+      signIn(trainer);
+      mockApi({ status: 200, body: article() }, { status: 200, body: [anna] });
+      open();
+      expect(await screen.findByRole("link", { name: tr("article.edit") })).toHaveAttribute("href", "/articles/7/edit");
     });
 
     it("403 → warning banner in Bulgarian, the raw detail is not shown", async () => {

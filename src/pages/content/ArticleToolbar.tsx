@@ -1,13 +1,15 @@
 // C2 author / admin toolbar (design: ArticleScreens.jsx → ArticleScreen, `.ct-toolbar`): StatusBadge · Публикувай (draft/archived)
 // or Архивирай (published) · trash → ConfirmDialog. POST /publish · POST /archive · DELETE /api/articles/:id.
 // Success → toast + reload (the list too). 401 → session dialog (api client). 403 / 422 / 500 → banner under the toolbar;
-// 404 → the page reloads into "not found". After deleting → /articles. "Редактирай" comes with the editor (C4).
+// 404 → the page reloads into "not found". After deleting → /articles/mine for the author, /articles for an admin.
+// "Редактирай" → /articles/:id/edit (a placeholder until the editor, C4).
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { Archive, Globe, Trash2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Archive, Globe, Pencil, Trash2 } from "lucide-react";
 import { ApiError, NETWORK_ERROR } from "@/api/client";
+import { useAuth } from "@/auth/AuthContext";
 import { archiveArticle, articleQueryKey, deleteArticle, publishArticle, type ArticleDto } from "@/api/content";
 import { ArticleStatusBadge } from "@/components/content/ArticleStatusBadge";
 import { Banner } from "@/components/feedback/Banner";
@@ -32,6 +34,7 @@ export function ArticleToolbar({ article: a }: { article: ArticleDto }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [confirm, setConfirm] = useState(false);
   const published = a.status === "Published";
 
@@ -42,8 +45,8 @@ export function ArticleToolbar({ article: a }: { article: ArticleDto }) {
       if (kind === "delete") {
         setConfirm(false);
         queryClient.removeQueries({ queryKey: articleQueryKey(a.id) });
-        void queryClient.invalidateQueries({ queryKey: ["articles", "list"] });
-        navigate("/articles", { replace: true });
+        void queryClient.invalidateQueries({ queryKey: ["articles"] });
+        navigate(user?.id === a.authorId ? "/articles/mine" : "/articles", { replace: true });
       } else {
         void queryClient.invalidateQueries({ queryKey: ["articles"] });
       }
@@ -67,6 +70,12 @@ export function ArticleToolbar({ article: a }: { article: ArticleDto }) {
       >
         <ArticleStatusBadge status={a.status} />
         <span className="flex-1" />
+        <Button asChild size="sm" variant="secondary">
+          <Link to={`/articles/${a.id}/edit`}>
+            <Pencil />
+            {t("article.edit")}
+          </Link>
+        </Button>
         {published ? (
           <Button size="sm" variant="secondary" loading={busy === "archive"} disabled={!!busy} title={t("article.archive.hint")} onClick={() => action.mutate("archive")}>
             <Archive />

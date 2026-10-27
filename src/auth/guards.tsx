@@ -9,11 +9,12 @@ export function RequireAuth() {
   return <Outlet />;
 }
 
-export function RequireRole({ role }: { role: string }) {
+/** Any one of the roles is enough. */
+export function RequireRole({ role }: { role: string | string[] }) {
   const { hasRole } = useAuth();
   // TODO: render the "Нямаш достъп" EmptyState instead of redirecting once that component exists.
   // Also the fallback for a ?returnTo= the user's role no longer allows (design 2026-10-21).
-  if (!hasRole(role)) return <Navigate to="/profile" replace />;
+  if (![role].flat().some(hasRole)) return <Navigate to="/profile" replace />;
   return <Outlet />;
 }
 

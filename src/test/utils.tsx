@@ -13,7 +13,8 @@ import { LocationProbe } from "@/test/LocationProbe";
 export const tr = (key: string, opts?: Record<string, unknown>) => i18n.t(key, opts);
 
 /** Renders `ui` at `path` (route pattern) opened as `url`; any other route renders the location probe. */
-export function renderScreen(ui: ReactElement, { url = "/", path = url.split("?")[0] }: { url?: string; path?: string } = {}) {
+/** `probes`: extra paths that render the location probe even though `path` would match them (e.g. /articles/mine vs /articles/:id). */
+export function renderScreen(ui: ReactElement, { url = "/", path = url.split("?")[0], probes = [] }: { url?: string; path?: string; probes?: string[] } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -21,6 +22,9 @@ export function renderScreen(ui: ReactElement, { url = "/", path = url.split("?"
         <MemoryRouter initialEntries={[url]}>
           <Routes>
             <Route path={path} element={ui} />
+            {probes.map((p) => (
+              <Route key={p} path={p} element={<LocationProbe />} />
+            ))}
             <Route path="*" element={<LocationProbe />} />
           </Routes>
         </MemoryRouter>

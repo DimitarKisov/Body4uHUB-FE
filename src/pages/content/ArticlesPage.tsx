@@ -2,9 +2,11 @@
 // Public page inside PublicLayout (header + footer), for visitors and signed-in users alike.
 // Mobile: one Card of rows (72px cover); ≥768px: a grid of cards (16:9 cover). No excerpt, filter or search (not in the API).
 // Skeleton · empty · error + retry. Author names: one batched /api/users/public call.
+// Trainer / Admin: "Моите статии" (C3) in the header.
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { Clock, FileText } from "lucide-react";
+import { Clock, FileText, Pencil } from "lucide-react";
+import { useAuth } from "@/auth/AuthContext";
 import { articlesQueryKey, getArticles, type ArticleSummaryDto } from "@/api/content";
 import { AuthorName } from "@/components/content/authors";
 import { CategoryCover } from "@/components/content/CategoryCover";
@@ -14,6 +16,7 @@ import { eyebrowClass, metaClass } from "@/components/content/styles";
 import { Pagination } from "@/components/data/Pagination";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthors, type Author } from "@/hooks/useAuthors";
@@ -74,6 +77,7 @@ function ArticleCardSkeleton() {
 
 export function ArticlesPage() {
   const { t } = useTranslation();
+  const { hasRole } = useAuth();
   const list = usePagedQuery(articlesQueryKey, getArticles);
   const { data, error, isFetching, refetch } = list;
   const author = useAuthors(data?.items.map((a) => a.authorId) ?? []);
@@ -81,7 +85,20 @@ export function ArticlesPage() {
 
   return (
     <div className={cn(publicWrap, "pt-6 pb-16 min-[900px]:pt-10")}>
-      <PageHeader title={t("articles.title")} description={t("articles.lead")} />
+      <PageHeader
+        title={t("articles.title")}
+        description={t("articles.lead")}
+        actions={
+          (hasRole("Trainer") || hasRole("Administrator")) && (
+            <Button asChild variant="secondary">
+              <Link to="/articles/mine">
+                <Pencil />
+                {t("nav.myArticles")}
+              </Link>
+            </Button>
+          )
+        }
+      />
 
       {error && !isFetching && <LoadError title={t("articles.loadErr.t")} onRetry={() => refetch()} />}
 

@@ -16,18 +16,20 @@ function useNav() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
   const isAdmin = hasRole("Administrator");
+  const isWriter = isAdmin || hasRole("Trainer");
   const profile: NavItem = { id: "profile", to: "/profile", icon: User, label: t("nav.profile"), shortLabel: t("nav.profile.short") };
   const security: NavItem = { id: "security", to: "/security", icon: KeyRound, label: t("nav.security") };
-  // Not a link to the public /articles: the profile menu will get "Моите статии" (C3) instead.
-  const content: NavItem = { id: "content", icon: FileText, label: t("nav.content"), shortLabel: t("nav.content.short"), soon: true };
+  // Only "Моите статии" (Trainer/Admin): the public articles and forum stay in the public header (user decision).
+  const mine: NavItem = { id: "mine", to: "/articles/mine", icon: FileText, label: t("nav.myArticles") };
   const services: NavItem = { id: "services", icon: CalendarDays, label: t("nav.services"), shortLabel: t("nav.services.short"), soon: true };
   const users: NavItem = { id: "users", to: "/admin/users", icon: Users, label: t("nav.users") };
   const sections = [
+    ...(isWriter ? [{ title: t("nav.contentSection"), items: [mine] }] : []),
     { title: t("nav.account"), items: [profile, security] },
-    { title: t("nav.modules"), items: [content, services] },
+    { title: t("nav.modules"), items: [services] },
     ...(isAdmin ? [{ title: t("nav.admin"), items: [users] }] : []),
   ];
-  const mobile = isAdmin ? [profile, security, users, content] : [profile, security, content, services];
+  const mobile = isAdmin ? [profile, security, users, mine] : isWriter ? [profile, security, mine, services] : [profile, security, services];
   return { sections, mobile };
 }
 

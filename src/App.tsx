@@ -29,6 +29,8 @@ const UsersPage = page(() => import("@/pages/admin/UsersPage"), "UsersPage");
 const UserDetailsPage = page(() => import("@/pages/admin/UserDetailsPage"), "UserDetailsPage");
 const ArticlesPage = page(() => import("@/pages/content/ArticlesPage"), "ArticlesPage");
 const ArticlePage = page(() => import("@/pages/content/ArticlePage"), "ArticlePage");
+const MyArticlesPage = page(() => import("@/pages/content/MyArticlesPage"), "MyArticlesPage");
+const EditorSoonPage = page(() => import("@/pages/content/EditorSoonPage"), "EditorSoonPage");
 
 export default function App() {
   const { pathname } = useLocation();
@@ -58,6 +60,11 @@ export default function App() {
             <Route element={<RequireRole role="Administrator" />}>
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/users/:id" element={<UserDetailsPage />} />
+            </Route>
+            <Route element={<RequireRole role={["Trainer", "Administrator"]} />}>
+              <Route path="/articles/mine" element={<MyArticlesPage />} />
+              <Route path="/articles/new" element={<EditorSoonPage />} />
+              <Route path="/articles/:id/edit" element={<EditorSoonPage />} />
             </Route>
           </Route>
         </Route>

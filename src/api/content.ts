@@ -25,6 +25,14 @@ export interface ArticleSummaryDto {
 export const getArticles = (page: number, pageSize: number) => api<PagedResult<ArticleSummaryDto>>(`/api/articles?page=${page}&pageSize=${pageSize}`);
 export const articlesQueryKey = (page: number, pageSize: number) => ["articles", "list", page, pageSize] as const;
 
+/**
+ * Trainer or Administrator. The signed-in user's own articles in every status (not deleted), last changed first
+ * (modifiedAt ?? createdAt). 200 · 400 bad page/size · 401 · 403 no Trainer/Administrator role.
+ */
+export const getMyArticles = (page: number, pageSize: number) =>
+  api<PagedResult<ArticleSummaryDto>>(`/api/articles/mine?page=${page}&pageSize=${pageSize}`);
+export const myArticlesQueryKey = (page: number, pageSize: number) => ["articles", "mine", page, pageSize] as const;
+
 export interface CommentDto {
   id: string;
   /** null for a deleted comment kept because it still has replies. */

@@ -5,7 +5,7 @@ import type { ArticleSummaryDto } from "@/api/content";
 import type { PagedResult } from "@/api/users";
 import { resetAuthorsCache } from "@/hooks/useAuthors";
 import { ArticlesPage } from "@/pages/content/ArticlesPage";
-import { mockApi, renderScreen, tr } from "@/test/utils";
+import { mockApi, renderScreen, signIn, testUser, tr } from "@/test/utils";
 
 const A1 = "aaaaaaaa-0000-0000-0000-000000000001";
 const B2 = "aaaaaaaa-0000-0000-0000-000000000002";
@@ -39,6 +39,19 @@ const anna = { id: A1, firstName: "Анна", lastName: "Колева" };
 beforeEach(() => resetAuthorsCache());
 
 describe("ArticlesPage", () => {
+  it("Моите статии in the header only for a trainer or an admin", async () => {
+    mockApi({ status: 200, body: pageOf([]) });
+    const { unmount } = renderScreen(<ArticlesPage />, { url: "/articles" });
+    await screen.findByText(tr("articles.empty.t"));
+    expect(screen.queryByRole("link", { name: tr("nav.myArticles") })).not.toBeInTheDocument();
+    unmount();
+
+    signIn({ ...testUser, roles: [{ id: "r-trainer", name: "Trainer" }] });
+    mockApi({ status: 200, body: pageOf([]) });
+    renderScreen(<ArticlesPage />, { url: "/articles" });
+    expect(await screen.findByRole("link", { name: tr("nav.myArticles") })).toHaveAttribute("href", "/articles/mine");
+  });
+
   it("lists articles with category, author, date and reading time; author names come in one batched call", async () => {
     const fetchMock = mockApi(
       { status: 200, body: pageOf([article(1), article(2, { category: "Nutrition", authorId: B2 }), article(3)]) },
