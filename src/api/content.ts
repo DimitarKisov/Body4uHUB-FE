@@ -1,4 +1,4 @@
-// Content API — ArticleController (backend/Body4uHUB.Content.Api/Controllers). Proxied by Vite to https://localhost:7002.
+// Content API — ArticleController, BookmarkController (backend/Body4uHUB.Content.Api/Controllers). Proxied by Vite to https://localhost:7002.
 // Mirrors Body4uHUB.Content.Application DTOs. JSON is camelCase; DateTime → ISO string without "Z" (UTC, see lib/format parseUtc).
 import { api } from "@/api/client";
 import type { PagedResult } from "@/api/users";
@@ -39,6 +39,8 @@ export interface CommentDto {
 /** GetArticleByIdResponse. */
 export interface ArticleDto extends ArticleSummaryDto {
   content: string;
+  /** The signed-in reader has saved it; always false for anonymous visitors. */
+  isBookmarked: boolean;
   /** Oldest first. Deleted comments without replies are already left out. */
   comments: CommentDto[];
 }
@@ -59,3 +61,11 @@ export const archiveArticle = (id: number) => api(`/api/articles/${id}/archive`,
 
 /** Author/Admin. Soft delete. 204 · 401 · 403 not the author · 404 missing · 422 already deleted. */
 export const deleteArticle = (id: number) => api(`/api/articles/${id}`, { method: "DELETE" });
+
+// ── Bookmarks (BookmarkController, all [Authorize]) ──
+
+/** Signed in. 201 { id } · 401 · 404 article not published (or missing) · 409 already bookmarked. */
+export const addBookmark = (articleId: number) => api<{ id: string }>(`/api/bookmarks/articles/${articleId}`, { method: "POST" });
+
+/** Signed in. 204 · 401 · 404 not bookmarked. */
+export const removeBookmark = (articleId: number) => api(`/api/bookmarks/articles/${articleId}`, { method: "DELETE" });

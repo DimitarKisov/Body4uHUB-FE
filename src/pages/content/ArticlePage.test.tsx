@@ -2,6 +2,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ArticleDto } from "@/api/content";
+import { Toaster } from "@/components/feedback/Toaster";
 import { resetAuthorsCache } from "@/hooks/useAuthors";
 import { ArticlePage } from "@/pages/content/ArticlePage";
 import { mockApi, renderScreen, signIn, testUser, tr } from "@/test/utils";
@@ -20,6 +21,7 @@ const article = (extra: Partial<ArticleDto> = {}): ArticleDto => ({
   viewCount: 12840,
   createdAt: "2026-10-19T08:00:00",
   modifiedAt: null,
+  isBookmarked: false,
   comments: [],
   ...extra,
 });
@@ -171,6 +173,60 @@ describe("ArticlePage", () => {
       await userEvent.click(await screen.findByRole("button", { name: tr("article.publish") }));
       expect(await screen.findByText(tr("editor.err.403"))).toBeInTheDocument();
       expect(screen.queryByText(/only modify/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("bookmark", () => {
+    const button = (name: string) => screen.findByRole("button", { name });
+    const withToasts = () => renderScreen(<><Toaster /><ArticlePage /></>, { url: "/articles/7", path: "/articles/:id" });
+
+    it("not for anonymous visitors, nor on an unpublished article", async () => {
+      mockApi({ status: 200, body: article() }, { status: 200, body: [anna] });
+      const { unmount } = open();
+      await screen.findByRole("heading", { level: 1 });
+      expect(screen.queryByRole("button", { name: tr("article.bookmark") })).not.toBeInTheDocument();
+      unmount();
+
+      signIn();
+      mockApi({ status: 200, body: article(draft) }, { status: 200, body: [anna] });
+      open();
+      await screen.findByText(tr("article.private.t"));
+      expect(screen.queryByRole("button", { name: tr("article.bookmark") })).not.toBeInTheDocument();
+    });
+
+    it("saves: POST, then \"Запазена\" (pressed) and a success toast", async () => {
+      signIn();
+      const fetchMock = mockApi({ status: 200, body: article() }, { status: 200, body: [anna] }, { status: 201, body: { id: "b1" } });
+      withToasts();
+      await userEvent.click(await button(tr("article.bookmark")));
+      expect(await button(tr("article.bookmarked"))).toHaveAttribute("aria-pressed", "true");
+      expect(await screen.findByText(tr("article.bookmark.ok"))).toBeInTheDocument();
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
+      expect(post?.[0]).toBe("/api/bookmarks/articles/7");
+    });
+
+    it("starts as \"Запазена\" when already saved; removing shows an info toast without an undo button", async () => {
+      signIn();
+      const fetchMock = mockApi(
+        { status: 200, body: article({ isBookmarked: true }) },
+        { status: 200, body: [anna] },
+        { status: 204 },
+      );
+      withToasts();
+      await userEvent.click(await button(tr("article.bookmarked")));
+      expect(await button(tr("article.bookmark"))).toHaveAttribute("aria-pressed", "false");
+      expect(fetchMock.mock.calls.find(([, init]) => init?.method === "DELETE")?.[0]).toBe("/api/bookmarks/articles/7");
+      expect(await screen.findByText(tr("article.bookmark.removed"))).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Върни" })).not.toBeInTheDocument();
+    });
+
+    it("409 (saved in another tab) → flips to \"Запазена\" with an info toast", async () => {
+      signIn();
+      mockApi({ status: 200, body: article() }, { status: 200, body: [anna] }, { status: 409, body: { status: 409, detail: "Bookmark already exists" } });
+      withToasts();
+      await userEvent.click(await button(tr("article.bookmark")));
+      expect(await button(tr("article.bookmarked"))).toBeInTheDocument();
+      expect(await screen.findByText(tr("article.bookmark.already"))).toBeInTheDocument();
     });
   });
 });
