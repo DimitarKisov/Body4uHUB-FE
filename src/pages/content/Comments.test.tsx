@@ -230,4 +230,154 @@ describe("Comments", () => {
       expect(replyButtons()).toHaveLength(1);
     });
   });
+
+  describe("edit and delete", () => {
+    const ME = testUser.id;
+    const admin = () => signIn({ ...testUser, roles: [{ id: "r-admin", name: "Administrator" }] });
+    const editButtons = () => within(section()).queryAllByRole("button", { name: tr("comments.edit") });
+    const deleteButtons = () => within(section()).queryAllByRole("button", { name: tr("comments.delete") });
+    const dialog = () => screen.getByRole("alertdialog");
+
+    it("own comments only: Редактирай / Изтрий under mine, not under others'", async () => {
+      signIn();
+      mockApi({ status: 200, body: article([comment("mine", ME), comment("other", BORIS)]) }, { status: 200, body: names });
+      open();
+      await screen.findByText("Текст other");
+      expect(editButtons()).toHaveLength(1);
+      expect(deleteButtons()).toHaveLength(1);
+    });
+
+    it("admin gets them under every comment", async () => {
+      admin();
+      mockApi({ status: 200, body: article([comment("mine", ME), comment("other", BORIS)]) }, { status: 200, body: names });
+      open();
+      await screen.findByText("Текст other");
+      expect(editButtons()).toHaveLength(2);
+      expect(deleteButtons()).toHaveLength(2);
+    });
+
+    it("on an archived article: nothing for the author, only Изтрий for an admin", async () => {
+      signIn();
+      mockApi({ status: 200, body: article([comment("mine", ME)], { status: "Archived" }) }, { status: 200, body: names });
+      const first = open();
+      await screen.findByText("Текст mine");
+      expect(editButtons()).toHaveLength(0);
+      expect(deleteButtons()).toHaveLength(0);
+      first.unmount();
+
+      admin();
+      mockApi({ status: 200, body: article([comment("mine", ME)], { status: "Archived" }) }, { status: 200, body: names });
+      open();
+      await screen.findByText("Текст mine");
+      expect(editButtons()).toHaveLength(0);
+      expect(deleteButtons()).toHaveLength(1);
+    });
+
+    it("edits inline: PUT with the trimmed text, the new text replaces the old one, toast", async () => {
+      signIn();
+      const fetchMock = mockApi({ status: 200, body: article([comment("mine", ME)]) }, { status: 200, body: names }, { status: 204 });
+      open();
+      await screen.findByText("Текст mine");
+      await userEvent.click(editButtons()[0]);
+
+      const field = screen.getByLabelText(tr("comments.edit"));
+      expect(field).toHaveValue("Текст mine");
+      expect(field).toHaveFocus();
+      await userEvent.clear(field);
+      await userEvent.type(field, " Поправен текст ");
+      await userEvent.click(within(section()).getByRole("button", { name: tr("comments.save") }));
+
+      expect(await screen.findByText("Поправен текст")).toBeInTheDocument();
+      expect(screen.queryByLabelText(tr("comments.edit"))).not.toBeInTheDocument();
+      expect(await screen.findByText(tr("comments.saved"))).toBeInTheDocument();
+      expect(screen.queryByText(/редактиран\)/)).not.toBeInTheDocument();
+      const put = fetchMock.mock.calls.findIndex(([, init]) => init?.method === "PUT");
+      expect(fetchMock.mock.calls[put][0]).toBe("/api/articles/7/comments/mine");
+      expect(sentBody(fetchMock, put)).toEqual({ content: "Поправен текст" });
+    });
+
+    it("edit: Отказ keeps the old text; 404 → banner that the comment is gone, the text stays", async () => {
+      signIn();
+      mockApi({ status: 200, body: article([comment("mine", ME)]) }, { status: 200, body: names }, { status: 404, body: { status: 404 } });
+      open();
+      await screen.findByText("Текст mine");
+      await userEvent.click(editButtons()[0]);
+      await userEvent.click(screen.getByRole("button", { name: tr("common.cancel") }));
+      expect(screen.getByText("Текст mine")).toBeInTheDocument();
+
+      await userEvent.click(editButtons()[0]);
+      const field = screen.getByLabelText(tr("comments.edit"));
+      await userEvent.type(field, "!");
+      await userEvent.click(within(section()).getByRole("button", { name: tr("comments.save") }));
+      expect(await screen.findByText(tr("comments.err.gone"))).toBeInTheDocument();
+      expect(field).toHaveValue("Текст mine!");
+    });
+
+    it("opening an edit closes an open reply composer", async () => {
+      signIn();
+      mockApi({ status: 200, body: article([comment("mine", ME)]) }, { status: 200, body: names });
+      open();
+      await screen.findByText("Текст mine");
+      await userEvent.click(screen.getByRole("button", { name: tr("comments.reply") }));
+      expect(screen.queryAllByText(tr("comments.replying", { name: `${testUser.firstName} ${testUser.lastName}` })).length).toBeGreaterThan(0);
+      await userEvent.click(editButtons()[0]);
+      expect(screen.queryAllByText(tr("comments.replying", { name: `${testUser.firstName} ${testUser.lastName}` }))).toHaveLength(0);
+    });
+
+    it("deletes a comment without replies: confirm, DELETE, it disappears, count drops, toast", async () => {
+      signIn();
+      const fetchMock = mockApi({ status: 200, body: article([comment("mine", ME), comment("other", BORIS)]) }, { status: 200, body: names }, { status: 204 });
+      open();
+      await screen.findByText("Текст mine");
+      await userEvent.click(deleteButtons()[0]);
+      expect(within(dialog()).getByText(tr("topic.post.delete.text"))).toBeInTheDocument();
+      await userEvent.click(within(dialog()).getByRole("button", { name: tr("comments.delete") }));
+
+      expect(await screen.findByText(tr("comments.removed"))).toBeInTheDocument();
+      expect(screen.queryByText("Текст mine")).not.toBeInTheDocument();
+      expect(within(section()).queryByText(tr("comments.deleted"))).not.toBeInTheDocument();
+      expect(within(section()).getByRole("heading", { level: 2 })).toHaveTextContent(`${tr("comments.title")}1`);
+      const del = fetchMock.mock.calls.findIndex(([, init]) => init?.method === "DELETE");
+      expect(fetchMock.mock.calls[del][0]).toBe("/api/articles/7/comments/mine");
+    });
+
+    it("deleting a comment with replies leaves the placeholder and says the replies stay", async () => {
+      signIn();
+      mockApi(
+        { status: 200, body: article([comment("mine", ME), comment("r", BORIS, { parentCommentId: "mine", createdAt: "2026-10-20T09:00:00" })]) },
+        { status: 200, body: names },
+        { status: 204 },
+      );
+      open();
+      await screen.findByText("Текст r");
+      await userEvent.click(deleteButtons()[0]);
+      expect(within(dialog()).getByText(tr("comments.delete.text"))).toBeInTheDocument();
+      await userEvent.click(within(dialog()).getByRole("button", { name: tr("comments.delete") }));
+
+      expect(await within(section()).findByText(tr("comments.deleted"))).toBeInTheDocument();
+      expect(screen.queryByText("Текст mine")).not.toBeInTheDocument();
+      expect(screen.getByText("Текст r")).toBeInTheDocument();
+    });
+
+    it("delete 422 → error toast and the article reloads", async () => {
+      signIn();
+      const fetchMock = mockApi(
+        { status: 200, body: article([comment("mine", ME)]) },
+        { status: 200, body: names }, // comment authors
+        { status: 200, body: names }, // article author
+        { status: 422, body: { status: 422, detail: "Comment already deleted" } },
+        { status: 200, body: article([]) },
+      );
+      open();
+      await screen.findByText("Текст mine");
+      await userEvent.click(deleteButtons()[0]);
+      await userEvent.click(within(dialog()).getByRole("button", { name: tr("comments.delete") }));
+
+      expect(await screen.findByText(tr("comments.err.422"))).toBeInTheDocument();
+      expect(screen.queryByText("Comment already deleted")).not.toBeInTheDocument();
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      await screen.findByText(tr("comments.empty"));
+      expect(fetchMock.mock.calls.filter(([url]) => url === "/api/articles/7")).toHaveLength(2);
+    });
+  });
 });

@@ -5,23 +5,30 @@
 // - composer at the bottom for a new top-level comment;
 // - "Отговори" (signed in, published) opens a composer at the end of that thread, "Отговаряш на {name}" + Отказ;
 //   parentCommentId = the comment clicked, not the top-level one. 404 → the parent is gone.
+// Own comment (or any, for an admin):
+// - "Редактирай" (published only) → inline composer with the text; PUT → cached text replaced + toast; errors → banner;
+// - "Изтрий" (published; on a draft / archived article only an admin) → ConfirmDialog; DELETE → placeholder if it has
+//   replies, otherwise gone (as the next GET would return it) + toast; errors → toast, 404 / 422 reload the article.
+// One composer (reply or edit) open at a time.
 // Anonymous → login prompt; unpublished (draft / archived) → existing comments stay visible, no composer or reply,
-// "Коментарите са достъпни…". No "(редактиран)" marker (user decision, as for articles). Not here yet: edit, delete.
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+// "Коментарите са достъпни…". No "(редактиран)" marker (user decision, as for articles).
+import { useState, type ReactNode } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Lock, Reply } from "lucide-react";
-import { addComment, articleQueryKey, type ArticleDto, type CommentDto } from "@/api/content";
+import { Lock, Reply, Trash2 } from "lucide-react";
+import { ApiError } from "@/api/client";
+import { addComment, articleQueryKey, deleteComment, editComment, type ArticleDto, type CommentDto } from "@/api/content";
 import { useAuth } from "@/auth/AuthContext";
 import { AuthorAvatar, AuthorName } from "@/components/content/authors";
 import { Composer } from "@/components/content/Composer";
 import { LoginPrompt } from "@/components/content/feedback";
 import { RelativeTime } from "@/components/content/RelativeTime";
 import { Banner } from "@/components/feedback/Banner";
+import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 import { notify } from "@/components/feedback/notify";
 import { Button } from "@/components/ui/button";
 import { useAuthors, type Author } from "@/hooks/useAuthors";
-import { buildThreads, COMMENT_LEN } from "@/lib/content";
+import { buildThreads, COMMENT_LEN, markDeleted } from "@/lib/content";
 import { commentBanner, type ProblemDetails } from "@/lib/problem";
 
 const rowClass = "grid grid-cols-[32px_minmax(0,1fr)] gap-3 py-3";
@@ -32,6 +39,10 @@ const actionClass = "h-8 px-2.5 text-muted-foreground hover:text-foreground [&_s
 const topLevelBanner = (p: ProblemDetails) =>
   p.status === 404 ? { tone: "error" as const, titleKey: "article.missing.t", textKey: "article.missing" } : commentBanner(p);
 
+/** Editing or deleting: 404 means the comment (or its article) is gone, not a parent. */
+const ownBanner = (p: ProblemDetails) =>
+  p.status === 404 ? { tone: "error" as const, titleKey: "err.404.t", textKey: "comments.err.gone" } : commentBanner(p);
+
 /** Backend-style UTC timestamp (no "Z"), for a comment added locally until the next load. */
 const utcNow = () => new Date().toISOString().replace("Z", "");
 
@@ -40,9 +51,13 @@ interface ItemProps {
   author: Author;
   replyTo?: string;
   onReply?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  /** Inline edit composer, shown instead of the text and the actions. */
+  editor?: ReactNode;
 }
 
-function CommentItem({ c, author, replyTo, onReply }: ItemProps) {
+function CommentItem({ c, author, replyTo, onReply, onEdit, onDelete, editor }: ItemProps) {
   const { t } = useTranslation();
   if (c.isDeleted) {
     return (
@@ -68,13 +83,29 @@ function CommentItem({ c, author, replyTo, onReply }: ItemProps) {
             {t("comments.replyTo", { name: replyTo })}
           </div>
         )}
-        <p className="mt-1 text-base leading-6 [overflow-wrap:anywhere] whitespace-pre-line text-foreground">{c.content}</p>
-        {onReply && (
+        {editor ? (
+          <div className="mt-2">{editor}</div>
+        ) : (
+          <p className="mt-1 text-base leading-6 [overflow-wrap:anywhere] whitespace-pre-line text-foreground">{c.content}</p>
+        )}
+        {!editor && (onReply || onEdit || onDelete) && (
           <div className="mt-1.5 -ml-2.5 flex flex-wrap gap-0.5">
-            <Button size="sm" variant="ghost" className={actionClass} onClick={onReply}>
-              <Reply />
-              {t("comments.reply")}
-            </Button>
+            {onReply && (
+              <Button size="sm" variant="ghost" className={actionClass} onClick={onReply}>
+                <Reply />
+                {t("comments.reply")}
+              </Button>
+            )}
+            {onEdit && (
+              <Button size="sm" variant="ghost" className={actionClass} onClick={onEdit}>
+                {t("comments.edit")}
+              </Button>
+            )}
+            {onDelete && (
+              <Button size="sm" variant="ghost" className={actionClass} onClick={onDelete}>
+                {t("comments.delete")}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -84,10 +115,12 @@ function CommentItem({ c, author, replyTo, onReply }: ItemProps) {
 
 export function Comments({ article: a }: { article: ArticleDto }) {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const queryClient = useQueryClient();
-  // One reply composer at a time: the comment being answered and the thread (top-level id) it sits in.
+  // One composer at a time: a reply (the comment being answered + the thread it sits in) or an edit.
   const [replying, setReplying] = useState<{ comment: CommentDto; rootId: string } | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<CommentDto | null>(null);
   const list = a.comments;
   const author = useAuthors(list.map((c) => c.authorId));
   const threads = buildThreads(list);
@@ -95,6 +128,14 @@ export function Comments({ article: a }: { article: ArticleDto }) {
   const count = list.filter((c) => !c.isDeleted).length;
   const published = a.status === "Published";
   const canReply = !!user && published;
+  const isAdmin = hasRole("Administrator");
+  const owns = (c: CommentDto) => !!user && (isAdmin || c.authorId === user.id);
+  // Backend: editing only on a published article; deleting on a draft / archived one only for an admin (moderation).
+  const canEdit = (c: CommentDto) => published && owns(c);
+  const canDelete = (c: CommentDto) => (published || isAdmin) && owns(c);
+
+  const updateComments = (fn: (list: CommentDto[]) => CommentDto[]) =>
+    queryClient.setQueryData<ArticleDto>(articleQueryKey(a.id), (old) => old && { ...old, comments: fn(old.comments) });
 
   const nameOf = (authorId: string) => {
     const p = author(authorId);
@@ -119,10 +160,36 @@ export function Comments({ article: a }: { article: ArticleDto }) {
       createdAt: utcNow(),
       modifiedAt: null,
     };
-    queryClient.setQueryData<ArticleDto>(articleQueryKey(a.id), (old) => old && { ...old, comments: [...old.comments, comment] });
+    updateComments((old) => [...old, comment]);
     if (parentCommentId) setReplying(null);
     notify.success(t("comments.added"));
   }
+
+  async function edit(id: string, content: string) {
+    await editComment(a.id, id, content);
+    updateComments((old) => old.map((c) => (c.id === id ? { ...c, content, modifiedAt: utcNow() } : c)));
+    setEditing(null);
+    notify.success(t("comments.saved"));
+  }
+
+  const remove = useMutation({
+    mutationFn: (c: CommentDto) => deleteComment(a.id, c.id),
+    onSuccess: (_, c) => {
+      updateComments((old) => markDeleted(old, c.id));
+      if (replying?.comment.id === c.id) setReplying(null);
+      notify.success(t("comments.removed"));
+    },
+    onError: (e) => {
+      const problem: ProblemDetails = e instanceof ApiError ? e.problem : { status: 500 };
+      const { status } = problem;
+      if (status === 401) return;
+      const copy = ownBanner(problem);
+      notify.error(t(copy.titleKey ?? "err.500.t"), t(copy.textKey));
+      // Someone else changed or deleted it meanwhile → show what is there now.
+      if (status === 404 || status === 422) void queryClient.invalidateQueries({ queryKey: articleQueryKey(a.id) });
+    },
+    onSettled: () => setDeleting(null),
+  });
 
   const item = (c: CommentDto, rootId: string, replyTo?: string) => (
     <CommentItem
@@ -130,7 +197,39 @@ export function Comments({ article: a }: { article: ArticleDto }) {
       c={c}
       author={author(c.authorId)}
       replyTo={replyTo}
-      onReply={canReply ? () => setReplying({ comment: c, rootId }) : undefined}
+      onReply={
+        canReply
+          ? () => {
+              setEditing(null);
+              setReplying({ comment: c, rootId });
+            }
+          : undefined
+      }
+      onEdit={
+        canEdit(c)
+          ? () => {
+              setReplying(null);
+              setEditing(c.id);
+            }
+          : undefined
+      }
+      onDelete={canDelete(c) ? () => setDeleting(c) : undefined}
+      editor={
+        editing === c.id ? (
+          <Composer
+            label={t("comments.edit")}
+            submitLabel={t("comments.save")}
+            initial={c.content ?? ""}
+            min={COMMENT_LEN.min}
+            max={COMMENT_LEN.max}
+            lengthKey="comments.v.len"
+            toBanner={ownBanner}
+            autoFocus
+            onCancel={() => setEditing(null)}
+            onSubmit={(text) => edit(c.id, text)}
+          />
+        ) : undefined
+      }
     />
   );
 
@@ -201,6 +300,19 @@ export function Comments({ article: a }: { article: ArticleDto }) {
           />
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleting}
+        destructive
+        icon={<Trash2 />}
+        title={t("comments.delete.t")}
+        description={deleting && list.some((c) => c.parentCommentId === deleting.id) ? t("comments.delete.text") : t("topic.post.delete.text")}
+        confirmLabel={t("comments.delete")}
+        cancelLabel={t("common.cancel")}
+        loading={remove.isPending}
+        onCancel={() => setDeleting(null)}
+        onConfirm={() => remove.mutate(deleting!)}
+      />
     </section>
   );
 }

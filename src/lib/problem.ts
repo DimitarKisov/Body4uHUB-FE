@@ -53,6 +53,8 @@ export function commentBanner(p: ProblemDetails): BannerCopy {
       return { tone: "error", titleKey: "err.500.t", textKey: "err.network" };
     case 404:
       return { tone: "error", titleKey: "err.404.t", textKey: "comments.err.404" };
+    case 403:
+      return { tone: "warning", titleKey: "err.403.t", textKey: "err.403" };
     case 422:
       return { tone: "error", titleKey: "err.422.t", textKey: "comments.err.422" };
     case 429:

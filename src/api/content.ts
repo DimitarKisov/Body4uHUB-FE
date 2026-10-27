@@ -78,3 +78,17 @@ export const removeBookmark = (articleId: number) => api(`/api/bookmarks/article
  */
 export const addComment = (articleId: number, content: string, parentCommentId: string | null = null) =>
   api<{ commentId: string }>(`/api/articles/${articleId}/comments`, { method: "POST", body: { content, parentCommentId } });
+
+/**
+ * Comment author or admin. 204 · 400 length 2–1000 · 401 · 403 not the author · 404 article or comment missing ·
+ * 422 article not published / deleted, or the comment is deleted.
+ */
+export const editComment = (articleId: number, commentId: string, content: string) =>
+  api(`/api/articles/${articleId}/comments/${commentId}`, { method: "PUT", body: { content } });
+
+/**
+ * Comment author or admin; on a draft / archived article only an admin. Soft delete.
+ * 204 · 401 · 403 not the author · 404 article or comment missing · 422 article deleted (or unpublished for the author), comment already deleted.
+ */
+export const deleteComment = (articleId: number, commentId: string) =>
+  api(`/api/articles/${articleId}/comments/${commentId}`, { method: "DELETE" });
