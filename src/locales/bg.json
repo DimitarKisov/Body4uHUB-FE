@@ -283,6 +283,8 @@
   "comments.ph": "Какво мислиш?",
   "comments.submit": "Публикувай",
   "comments.replyTo": "в отговор на {name}",
+  "comments.reply": "Отговори",
+  "comments.replying": "Отговаряш на {name}",
   "comments.deleted": "Коментарът е изтрит",
   "comments.added": "Коментарът е публикуван",
   "comments.login": "Влез, за да коментираш и да отговаряш.",

@@ -156,4 +156,78 @@ describe("Comments", () => {
     expect(await screen.findByText(tr("article.missing"))).toBeInTheDocument();
     expect(screen.queryByText("Article not found")).not.toBeInTheDocument();
   });
+  describe("replies", () => {
+    const thread = () => [
+      comment("c1", BORIS, { createdAt: "2026-10-20T08:00:00" }),
+      comment("c2", VERA, { parentCommentId: "c1", createdAt: "2026-10-20T09:00:00" }),
+    ];
+    const replyButtons = () => screen.queryAllByRole("button", { name: tr("comments.reply") });
+
+    it("replying to a reply: composer at the end of the thread, parentCommentId = the comment clicked", async () => {
+      signIn();
+      const fetchMock = mockApi(
+        { status: 200, body: article(thread()) },
+        { status: 200, body: names },
+        { status: 201, body: { commentId: "r-new" } },
+      );
+      open();
+      await screen.findByText("Текст c2");
+      await userEvent.click(replyButtons()[1]); // under c2 (Вера)
+
+      // Visible context line + the (visually hidden) label of the field.
+      const field = await screen.findByLabelText(tr("comments.replying", { name: "Вера Колева" }));
+      expect(field).toHaveFocus();
+      await userEvent.type(field, "Благодаря!");
+      await userEvent.click(within(field.closest("form")!).getByRole("button", { name: tr("comments.reply") }));
+
+      expect(await screen.findByText("Благодаря!")).toBeInTheDocument();
+      expect(screen.queryAllByText(tr("comments.replying", { name: "Вера Колева" }))).toHaveLength(0);
+      expect(screen.getByText(tr("comments.replyTo", { name: "Вера Колева" }))).toBeInTheDocument();
+      const post = fetchMock.mock.calls.findIndex(([, init]) => init?.method === "POST");
+      expect(sentBody(fetchMock, post)).toEqual({ content: "Благодаря!", parentCommentId: "c2" });
+    });
+
+    it("Отказ closes the reply composer", async () => {
+      signIn();
+      mockApi({ status: 200, body: article(thread()) }, { status: 200, body: names });
+      open();
+      await screen.findByText("Текст c1");
+      await userEvent.click(replyButtons()[0]);
+      await userEvent.click(await screen.findByRole("button", { name: tr("common.cancel") }));
+      expect(screen.queryAllByText(tr("comments.replying", { name: "Борис Тодоров" }))).toHaveLength(0);
+    });
+
+    it("404 (the comment was deleted meanwhile) → banner, the text stays", async () => {
+      signIn();
+      mockApi({ status: 200, body: article(thread()) }, { status: 200, body: names }, { status: 404, body: { status: 404 } });
+      open();
+      await screen.findByText("Текст c1");
+      await userEvent.click(replyButtons()[0]);
+      const field = await screen.findByLabelText(tr("comments.replying", { name: "Борис Тодоров" }));
+      await userEvent.type(field, "Отговор");
+      await userEvent.click(within(field.closest("form")!).getByRole("button", { name: tr("comments.reply") }));
+      expect(await screen.findByText(tr("comments.err.404"))).toBeInTheDocument();
+      expect(field).toHaveValue("Отговор");
+    });
+
+    it("no reply buttons for anonymous visitors, on an archived article, or on a deleted comment", async () => {
+      mockApi({ status: 200, body: article(thread()) }, { status: 200, body: names });
+      const { unmount } = open();
+      await screen.findByText("Текст c1");
+      expect(replyButtons()).toHaveLength(0);
+      unmount();
+
+      signIn();
+      mockApi({ status: 200, body: article(thread(), { status: "Archived" }) }, { status: 200, body: names });
+      const second = open();
+      await screen.findByText("Текст c1");
+      expect(replyButtons()).toHaveLength(0);
+      second.unmount();
+
+      mockApi({ status: 200, body: article([comment("d", VERA, { isDeleted: true, content: null }), comment("e", BORIS, { parentCommentId: "d" })]) }, { status: 200, body: names });
+      open();
+      await screen.findByText("Текст e");
+      expect(replyButtons()).toHaveLength(1);
+    });
+  });
 });
