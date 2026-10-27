@@ -274,7 +274,6 @@
   "article.bookmark.ok": "Статията е запазена",
   "article.bookmark.removed": "Премахната от запазените",
   "article.bookmark.already": "Статията вече е в запазените",
-  "content.edited": "(редактиран)",
   "content.counter": "{n} / {max}",
   "content.loginPrompt.cta": "Вход",
   "content.loginPrompt.reg": "Създай профил",

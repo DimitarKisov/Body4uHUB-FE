@@ -2,7 +2,8 @@
 // Two levels: top-level comments, each with all its descendants flattened into one indented list (2px rule); a reply to a
 // reply shows "↳ в отговор на {name}". Count leaves out deleted placeholders. Composer at the bottom:
 // POST /api/articles/:id/comments → the comment is added to the cached article + toast. Anonymous → login prompt;
-// unpublished → "Коментарите са достъпни…". Not here yet: reply, edit, delete (next steps).
+// unpublished (draft / archived) → existing comments stay visible, but instead of the composer "Коментарите са достъпни…". No "(редактиран)" marker (user decision,
+// as for articles). Not here yet: reply, edit, delete (next steps).
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Lock, Reply } from "lucide-react";
@@ -16,7 +17,6 @@ import { Banner } from "@/components/feedback/Banner";
 import { notify } from "@/components/feedback/notify";
 import { useAuthors, type Author } from "@/hooks/useAuthors";
 import { buildThreads, COMMENT_LEN } from "@/lib/content";
-import { formatDateTime } from "@/lib/format";
 import { commentBanner, type ProblemDetails } from "@/lib/problem";
 
 const rowClass = "grid grid-cols-[32px_minmax(0,1fr)] gap-3 py-3";
@@ -47,7 +47,6 @@ function CommentItem({ c, author, replyTo }: { c: CommentDto; author: Author; re
             <AuthorName author={author} />
           </span>
           <RelativeTime iso={c.createdAt} relative />
-          {c.modifiedAt && <span title={formatDateTime(c.modifiedAt)}>{t("content.edited")}</span>}
         </div>
         {replyTo && (
           <div className="mt-0.5 inline-flex items-center gap-1 text-[13px] text-muted-foreground">

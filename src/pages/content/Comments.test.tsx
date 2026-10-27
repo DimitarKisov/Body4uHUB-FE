@@ -74,7 +74,7 @@ describe("Comments", () => {
     expect(await screen.findByText(tr("comments.replyTo", { name: "Вера Колева" }))).toBeInTheDocument();
     expect(screen.getByText(tr("comments.deleted"))).toBeInTheDocument();
     expect(screen.queryByText(tr("comments.replyTo", { name: tr("comments.deleted").toLowerCase() }))).not.toBeInTheDocument();
-    expect(screen.getByText(tr("content.edited"))).toBeInTheDocument();
+    expect(screen.queryByText(/редактиран/)).not.toBeInTheDocument();
     // Oldest root first: the deleted c4 (07:00) before c1 (08:00).
     const texts = within(section()).getAllByText(/^(Текст c\d|Коментарът е изтрит)$/).map((x) => x.textContent);
     expect(texts).toEqual([tr("comments.deleted"), "Текст c5", "Текст c1", "Текст c2", "Текст c3"]);
@@ -94,6 +94,15 @@ describe("Comments", () => {
     mockApi({ status: 200, body: article([], { status: "Draft", publishedAt: null }) }, { status: 200, body: names });
     open();
     expect(await screen.findByText(tr("comments.closed"))).toBeInTheDocument();
+    expect(screen.queryByLabelText(tr("comments.write"))).not.toBeInTheDocument();
+  });
+
+  it("an archived article keeps showing its comments, read-only", async () => {
+    signIn();
+    mockApi({ status: 200, body: article([comment("c1", BORIS)], { status: "Archived" }) }, { status: 200, body: names });
+    open();
+    expect(await screen.findByText("Текст c1")).toBeInTheDocument();
+    expect(screen.getByText(tr("comments.closed"))).toBeInTheDocument();
     expect(screen.queryByLabelText(tr("comments.write"))).not.toBeInTheDocument();
   });
 
