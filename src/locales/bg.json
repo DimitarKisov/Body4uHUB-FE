@@ -252,11 +252,20 @@
   "cat.Nutrition": "Хранене",
   "cat.Recovery": "Възстановяване",
   "cat.Other": "Друго",
-  "content.deletedUser": "Изтрит потребител",
   "content.minutes": "{n} мин четене",
+  "content.views": "{n} прегледа",
+  "content.editedF": "(редактирана)",
   "articles.title": "Статии",
   "articles.lead": "Тренировки, хранене и възстановяване — от треньорите в Body4uHUB.",
   "articles.empty.t": "Все още няма статии",
   "articles.empty": "Треньорите ни пишат първите. Провери отново скоро.",
-  "articles.loadErr.t": "Статиите не се заредиха"
+  "articles.loadErr.t": "Статиите не се заредиха",
+  "article.back": "Статии",
+  "article.notPublished": "Непубликувана",
+  "article.private.t": "Тази статия не е публикувана",
+  "article.private": "Виждаш я само ти и администраторите.",
+  "article.private.admin": "Виждаш я, защото си администратор. Читателите не я виждат.",
+  "article.missing.t": "Статията не е намерена",
+  "article.missing": "Възможно е да е изтрита или все още да не е публикувана.",
+  "article.missing.cta": "Към статиите"
 }

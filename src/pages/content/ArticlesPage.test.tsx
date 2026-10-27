@@ -8,7 +8,7 @@ import { ArticlesPage } from "@/pages/content/ArticlesPage";
 import { mockApi, renderScreen, tr } from "@/test/utils";
 
 const A1 = "aaaaaaaa-0000-0000-0000-000000000001";
-const GONE = "aaaaaaaa-0000-0000-0000-000000000099";
+const B2 = "aaaaaaaa-0000-0000-0000-000000000002";
 
 const article = (id: number, extra: Partial<ArticleSummaryDto> = {}): ArticleSummaryDto => ({
   id,
@@ -41,8 +41,8 @@ beforeEach(() => resetAuthorsCache());
 describe("ArticlesPage", () => {
   it("lists articles with category, author, date and reading time; author names come in one batched call", async () => {
     const fetchMock = mockApi(
-      { status: 200, body: pageOf([article(1), article(2, { category: "Nutrition", authorId: GONE }), article(3)]) },
-      { status: 200, body: [anna] },
+      { status: 200, body: pageOf([article(1), article(2, { category: "Nutrition", authorId: B2 }), article(3)]) },
+      { status: 200, body: [anna, { id: B2, firstName: "Борис", lastName: "Петров" }] },
     );
     renderScreen(<ArticlesPage />, { url: "/articles" });
 
@@ -52,13 +52,13 @@ describe("ArticlesPage", () => {
     expect(screen.getAllByText(tr("content.minutes", { n: 4 }))).toHaveLength(3);
     expect(screen.getAllByText("20.10.2026")).toHaveLength(3);
     expect(await screen.findAllByText("Анна Колева")).toHaveLength(2);
-    expect(screen.getByText(tr("content.deletedUser"))).toBeInTheDocument();
+    expect(screen.getByText("Борис Петров")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Статия номер 1/ })).toHaveAttribute("href", "/articles/1");
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[0][0]).toBe("/api/articles?page=1&pageSize=10");
     // Duplicates collapse into one id each; anonymous call.
-    expect(fetchMock.mock.calls[1][0]).toBe(`/api/users/public?ids=${A1}&ids=${GONE}`);
+    expect(fetchMock.mock.calls[1][0]).toBe(`/api/users/public?ids=${A1}&ids=${B2}`);
   });
 
   it("hides the pager when everything fits on one page and shows it otherwise", async () => {

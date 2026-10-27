@@ -24,3 +24,28 @@ export interface ArticleSummaryDto {
 /** Public. 200 published articles, newest publication first · 400 bad page/size (page ≥ 1, 1 ≤ pageSize ≤ 100). */
 export const getArticles = (page: number, pageSize: number) => api<PagedResult<ArticleSummaryDto>>(`/api/articles?page=${page}&pageSize=${pageSize}`);
 export const articlesQueryKey = (page: number, pageSize: number) => ["articles", "list", page, pageSize] as const;
+
+export interface CommentDto {
+  id: string;
+  /** null for a deleted comment kept because it still has replies. */
+  content: string | null;
+  authorId: string;
+  parentCommentId: string | null;
+  isDeleted: boolean;
+  createdAt: string;
+  modifiedAt: string | null;
+}
+
+/** GetArticleByIdResponse. */
+export interface ArticleDto extends ArticleSummaryDto {
+  content: string;
+  /** Oldest first. Deleted comments without replies are already left out. */
+  comments: CommentDto[];
+}
+
+/**
+ * Public; sends the token when signed in, so the author or an admin also gets drafts and archived articles.
+ * 200 · 404 missing, deleted or someone else's unpublished article. Counts a view for a published article (once per IP).
+ */
+export const getArticle = (id: number) => api<ArticleDto>(`/api/articles/${id}`);
+export const articleQueryKey = (id: number) => ["articles", "detail", id] as const;

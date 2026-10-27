@@ -1,16 +1,15 @@
 // Author names for Content screens (design: content shared.jsx → useAuthors).
 // A screen passes every authorId it shows; ids not cached yet go out in ONE GET /api/users/public?ids=… (chunks of 50, the API limit).
 // The result is cached for the browser session (module scope; names are public, so signing out keeps them).
-// An id the API leaves out = a deleted user → "Изтрит потребител". A failed request leaves the ids unresolved, to retry on the next screen.
+// Users are never deleted in Identity (removing a trainer only revokes the role), so every author has a name.
+// An id the API still leaves out (bad data) or a failed request → "—"; a failed request is retried on the next screen.
 import { useEffect, useSyncExternalStore } from "react";
-import { useTranslation } from "react-i18next";
 import { getPublicUsers, PUBLIC_USERS_MAX_IDS, type PublicUser } from "@/api/users";
 
 export type Author =
   | { state: "loading" }
   | { state: "known"; firstName: string; lastName: string; name: string }
-  | { state: "gone" }
-  /** The names request failed. */
+  /** The names request failed, or the id is not in Identity. */
   | { state: "unknown" };
 
 const cache = new Map<string, PublicUser | null>();
@@ -70,7 +69,7 @@ export function useAuthors(ids: (string | null | undefined)[]): (id: string) => 
     const id = norm(raw);
     if (cache.has(id)) {
       const u = cache.get(id);
-      return u ? { state: "known", firstName: u.firstName, lastName: u.lastName, name: `${u.firstName} ${u.lastName}` } : { state: "gone" };
+      return u ? { state: "known", firstName: u.firstName, lastName: u.lastName, name: `${u.firstName} ${u.lastName}` } : { state: "unknown" };
     }
     return failed.has(id) ? { state: "unknown" } : { state: "loading" };
   };
@@ -78,6 +77,5 @@ export function useAuthors(ids: (string | null | undefined)[]): (id: string) => 
 
 /** Plain-text name for copy like "в отговор на {name}" ("" while loading). */
 export function useAuthorLabel() {
-  const { t } = useTranslation();
-  return (a: Author) => (a.state === "known" ? a.name : a.state === "gone" ? t("content.deletedUser") : a.state === "unknown" ? "—" : "");
+  return (a: Author) => (a.state === "known" ? a.name : a.state === "unknown" ? "—" : "");
 }

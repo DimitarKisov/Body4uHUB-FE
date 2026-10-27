@@ -25,3 +25,8 @@ export function formatDateTime(iso: string): string {
   return `${formatDate(iso)}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+
+/** 12840 → 12 840 (bg-BG groups from 5 digits). */
+export function formatNumber(n: number): string {
+  return n.toLocaleString("bg-BG");
+}
