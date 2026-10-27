@@ -12,6 +12,7 @@ import { login, resendConfirmation } from "@/api/auth";
 import { ApiError } from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
 import { Banner } from "@/components/feedback/Banner";
+import { Checkbox } from "@/components/forms/Checkbox";
 import { PasswordField } from "@/components/forms/PasswordField";
 import { TextField } from "@/components/forms/TextField";
 import { AuthHead } from "@/components/layout/AuthHead";
@@ -51,7 +52,7 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: params.get("email") ?? "", password: "" },
+    defaultValues: { email: params.get("email") ?? "", password: "", rememberMe: false },
   });
 
   useEffect(() => {
@@ -140,10 +141,14 @@ export function LoginPage() {
         />
         <div className="flex flex-col gap-2">
           <PasswordField label={t("f.password")} error={errors.password?.message} {...register("password")} />
-          {/* Carries the typed email to the forgot-password form. */}
-          <Link to={forgotTo} className={`self-end py-1.5 text-[13px] ${linkClass}`}>
-            {t("login.forgot")}
-          </Link>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            {/* Off: the session ends when the browser closes. On: it lasts up to 30 days (7 without a visit). */}
+            <Checkbox label={t("login.remember")} {...register("rememberMe")} />
+            {/* Carries the typed email to the forgot-password form. */}
+            <Link to={forgotTo} className={`ml-auto py-1.5 text-[13px] ${linkClass}`}>
+              {t("login.forgot")}
+            </Link>
+          </div>
         </div>
         <Button type="submit" size="lg" className="w-full" loading={isSubmitting} disabled={wait > 0}>
           {wait > 0 ? `${t("login.submit")} · ${wait} сек.` : t("login.submit")}

@@ -26,7 +26,7 @@ export const phoneNumber = z
   .transform((v) => v || null);
 
 export const registerSchema = z.object({ firstName: name("firstName"), lastName: name("lastName"), email, phoneNumber, password });
-export const loginSchema = z.object({ email, password: z.string().min(1, "v.password.required") });
+export const loginSchema = z.object({ email, password: z.string().min(1, "v.password.required"), rememberMe: z.boolean() });
 export const profileSchema = z.object({ firstName: name("firstName"), lastName: name("lastName"), phoneNumber });
 export const changePasswordSchema = z
   .object({ currentPassword: z.string().min(1, "v.currentPassword.required"), newPassword: password })

@@ -2,7 +2,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { LoginPage } from "@/pages/auth/LoginPage";
-import { fakeToken, mockApi, renderScreen, sentBody, testUser, tr } from "@/test/utils";
+import { authResponse, mockApi, renderScreen, sentBody, testUser, tr } from "@/test/utils";
 
 async function submit(email = "anna@body4u.bg", password = "Parola1!") {
   const user = userEvent.setup();
@@ -22,11 +22,21 @@ describe("LoginPage", () => {
   });
 
   it("stores the session on success", async () => {
-    const fetchMock = mockApi({ status: 200, body: { accessToken: fakeToken(), user: testUser } });
+    const fetchMock = mockApi({ status: 200, body: authResponse() });
     renderScreen(<LoginPage />, { url: "/login" });
     await submit();
-    expect(sentBody(fetchMock)).toEqual({ email: "anna@body4u.bg", password: "Parola1!" });
+    expect(sentBody(fetchMock)).toEqual({ email: "anna@body4u.bg", password: "Parola1!", rememberMe: false });
     await vi.waitFor(() => expect(sessionStorage.getItem("b4u.session")).toContain(testUser.id));
+  });
+
+  it("\"Запомни ме\" (off by default) is sent as rememberMe", async () => {
+    const fetchMock = mockApi({ status: 200, body: authResponse() });
+    renderScreen(<LoginPage />, { url: "/login" });
+    const remember = screen.getByRole("checkbox", { name: tr("login.remember") });
+    expect(remember).not.toBeChecked();
+    await userEvent.click(remember);
+    await submit();
+    expect(sentBody(fetchMock)).toMatchObject({ rememberMe: true });
   });
 
   it("shows one generic banner for wrong credentials (401)", async () => {

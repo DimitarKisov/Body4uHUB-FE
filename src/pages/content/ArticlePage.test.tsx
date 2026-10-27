@@ -5,7 +5,7 @@ import type { ArticleDto } from "@/api/content";
 import { Toaster } from "@/components/feedback/Toaster";
 import { resetAuthorsCache } from "@/hooks/useAuthors";
 import { ArticlePage } from "@/pages/content/ArticlePage";
-import { mockApi, renderScreen, signIn, testUser, tr } from "@/test/utils";
+import { authResponse, mockApi, renderScreen, signIn, testUser, tr } from "@/test/utils";
 
 const A1 = testUser.id;
 
@@ -62,14 +62,24 @@ describe("ArticlePage", () => {
     expect(screen.queryByText("21.10.2026")).not.toBeInTheDocument();
   });
 
-  it("an expired session still shows a published article, without the session dialog", async () => {
+  it("a 401 refreshes the session silently and repeats the call with the new token", async () => {
     signIn();
-    const fetchMock = mockApi({ status: 401 }, { status: 200, body: article() }, { status: 200, body: [anna] });
+    const fresh = authResponse();
+    const fetchMock = mockApi({ status: 401 }, { status: 200, body: fresh }, { status: 200, body: article(draft) }, { status: 200, body: [anna] });
+    open();
+    expect(await screen.findByText(tr("article.private.t"))).toBeInTheDocument();
+    expect(fetchMock.mock.calls[1][0]).toBe("/api/auth/refresh");
+    expect(fetchMock.mock.calls[2][1]?.headers).toMatchObject({ Authorization: `Bearer ${fresh.accessToken}` });
+  });
+
+  it("a session that can no longer be refreshed still shows a published article, anonymously", async () => {
+    signIn();
+    const fetchMock = mockApi({ status: 401 }, { status: 401 }, { status: 200, body: article() }, { status: 200, body: [anna] });
     open();
     expect(await screen.findByRole("heading", { level: 1, name: "Как да започнеш със силови тренировки" })).toBeInTheDocument();
     expect(fetchMock.mock.calls[0][1]?.headers).toHaveProperty("Authorization");
-    expect(fetchMock.mock.calls[1][1]?.headers).not.toHaveProperty("Authorization");
-    expect(sessionStorage.getItem("b4u.session")).not.toBeNull();
+    expect(fetchMock.mock.calls[1][0]).toBe("/api/auth/refresh");
+    expect(fetchMock.mock.calls[2][1]?.headers).not.toHaveProperty("Authorization");
   });
 
   it("404 → not found, with a way back to the list", async () => {

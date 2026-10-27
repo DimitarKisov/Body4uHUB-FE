@@ -16,10 +16,18 @@ export const register = (body: RegisterRequest) => api<UserDto>("/api/auth/regis
 export interface LoginRequest {
   email: string;
   password: string;
+  /** "Запомни ме": the refresh cookie outlives the browser (7 days without use, 30 at most); else until it closes. */
+  rememberMe: boolean;
 }
 
-/** 200 AuthResponseDto · 400 validation · 401 bad credentials · 403 email not confirmed · 429 (5/min per IP). */
+/** 200 AuthResponseDto + refresh cookie · 400 validation · 401 bad credentials · 403 email not confirmed · 429 (5/min per IP). */
 export const login = (body: LoginRequest) => api<AuthResponseDto>("/api/auth/login", { method: "POST", body, auth: false });
+
+/** No body; uses the refresh cookie. 200 AuthResponseDto (current roles) + rotated cookie · 401 no / expired / revoked session · 429 (30/min per IP). */
+export const refreshSession = () => api<AuthResponseDto>("/api/auth/refresh", { method: "POST", auth: false });
+
+/** Ends this device's session and deletes the refresh cookie. Always 204. */
+export const logout = () => api("/api/auth/logout", { method: "POST", auth: false });
 
 /** 204 (also when already confirmed with the same token) · 400 missing email/token · 422 invalid, expired or unknown email. */
 export const confirmEmail = (email: string, token: string) =>

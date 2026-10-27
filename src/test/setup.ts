@@ -7,4 +7,5 @@ import "@/lib/i18n";
 afterEach(() => {
   cleanup();
   sessionStorage.clear();
+  localStorage.clear();
 });

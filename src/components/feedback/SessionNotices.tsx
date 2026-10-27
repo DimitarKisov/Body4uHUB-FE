@@ -15,11 +15,11 @@ const formatLeft = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} мин.`;
 };
 
-/** Warning banner 5 min before `exp`. Informational only: there is no refresh token, so the session can't be extended. */
+/** Warning banner 5 min before the 30-day end of the session. Informational only: that end can't be extended. */
 export function SessionWarning() {
-  const { sessionState, expiresAt, dismissWarning } = useAuth();
-  if (sessionState !== "warning" || !expiresAt) return null;
-  return <WarningBanner expiresAt={expiresAt} onDismiss={dismissWarning} />;
+  const { sessionState, sessionEndsAt, dismissWarning } = useAuth();
+  if (sessionState !== "warning" || !sessionEndsAt) return null;
+  return <WarningBanner expiresAt={sessionEndsAt} onDismiss={dismissWarning} />;
 }
 
 // Mounted only while warning, so the countdown starts from the current time.
@@ -50,7 +50,7 @@ function WarningBanner({ expiresAt, onDismiss }: { expiresAt: number; onDismiss:
 }
 
 /**
- * "Сесията ти изтече" (at `exp` or any 401) / "Профилът не е наличен" (404 on /api/users/me). Can't be dismissed:
+ * "Сесията ти изтече" (the session could not be refreshed, or its 30 days are over) / "Профилът не е наличен" (404 on /api/users/me). Can't be dismissed:
  * Escape and overlay clicks do nothing, focus stays on the only button. Expired → login, then back to this page.
  * `afterRequest` (public pages): only once a request failed — a token that merely ran out does not interrupt reading.
  */

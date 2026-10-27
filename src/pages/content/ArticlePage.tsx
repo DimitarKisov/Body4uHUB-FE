@@ -1,7 +1,7 @@
 // C2 · Статия — GET /api/articles/:id (design: ui_kits/content/ArticleScreens.jsx → ArticleScreen).
 // Public page inside PublicLayout. Column max 720px: back → hero cover → eyebrow → H1 → byline → body (paragraphs split on blank lines).
 // Drafts/archived come back only for the author or an admin → warning banner. 404 (or a non-numeric id) → C2c "Статията не е намерена".
-// Author (with the Trainer role) or admin → ArticleToolbar above the hero. "Запази" in the byline (signed in, published). Not here yet: Редактирай (C4), comments.
+// Author (with the Trainer role) or admin → ArticleToolbar above the hero. "Запази" in the byline (signed in, published). Comments below. Not here yet: Редактирай (C4).
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
@@ -25,6 +25,7 @@ import { formatNumber } from "@/lib/format";
 import { publicWrap } from "@/lib/layout";
 import { ArticleToolbar } from "@/pages/content/ArticleToolbar";
 import { BookmarkButton } from "@/pages/content/BookmarkButton";
+import { Comments } from "@/pages/content/Comments";
 import { cn } from "@/lib/utils";
 
 const heroClass = "mb-6 h-[120px] md:mb-8 md:h-[200px]";
@@ -122,6 +123,7 @@ export function ArticlePage() {
                   </p>
                 ))}
             </div>
+            <Comments article={a} />
           </article>
         )}
       </div>

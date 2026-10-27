@@ -66,8 +66,18 @@ export function fakeToken(expiresInMs = 60 * 60 * 1000) {
   return `${b64({ alg: "none" })}.${b64({ exp: Math.floor((Date.now() + expiresInMs) / 1000) })}.sig`;
 }
 
+/** Backend-style UTC timestamp (no "Z") `ms` from now. */
+export const utcIn = (ms: number) => new Date(Date.now() + ms).toISOString().replace("Z", "");
+
+/** A login / refresh response: 1-hour token, session ending in 30 days. */
+export const authResponse = (user: UserDto = testUser, tokenMs = 60 * 60 * 1000): AuthResponseDto => ({
+  accessToken: fakeToken(tokenMs),
+  user,
+  sessionExpiresAt: utcIn(30 * 24 * 60 * 60 * 1000),
+});
+
 /** Puts a signed-in session in sessionStorage; call before renderScreen. */
 export function signIn(user: UserDto = testUser) {
-  const session: AuthResponseDto = { accessToken: fakeToken(), user };
+  const session: AuthResponseDto = authResponse(user);
   sessionStorage.setItem("b4u.session", JSON.stringify(session));
 }

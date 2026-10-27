@@ -69,3 +69,12 @@ export const addBookmark = (articleId: number) => api<{ id: string }>(`/api/book
 
 /** Signed in. 204 · 401 · 404 not bookmarked. */
 export const removeBookmark = (articleId: number) => api(`/api/bookmarks/articles/${articleId}`, { method: "DELETE" });
+
+// ── Comments (inside the article aggregate) ──
+
+/**
+ * Signed in. 201 { commentId } · 400 length 2–1000 · 401 · 404 article or parent comment missing ·
+ * 422 article not published / deleted · 429 10 per minute per user (no Retry-After).
+ */
+export const addComment = (articleId: number, content: string, parentCommentId: string | null = null) =>
+  api<{ commentId: string }>(`/api/articles/${articleId}/comments`, { method: "POST", body: { content, parentCommentId } });

@@ -26,6 +26,17 @@ export function formatDateTime(iso: string): string {
 }
 
 
+/** "току-що", "преди 5 мин", "преди 3 ч", "вчера", "преди 4 дни" for 7 days, then dd.mm.yyyy (design: content shared.jsx FMT.rel). */
+export function formatRelative(iso: string, now = Date.now()): string {
+  const s = (now - parseUtc(iso).getTime()) / 1000;
+  if (s < 60) return "току-що";
+  if (s < 3600) return `преди ${Math.floor(s / 60)} мин`;
+  if (s < 86400) return `преди ${Math.floor(s / 3600)} ч`;
+  if (s < 172800) return "вчера";
+  if (s < 604800) return `преди ${Math.floor(s / 86400)} дни`;
+  return formatDate(iso);
+}
+
 /** 12840 → 12 840 (bg-BG groups from 5 digits). */
 export function formatNumber(n: number): string {
   return n.toLocaleString("bg-BG");

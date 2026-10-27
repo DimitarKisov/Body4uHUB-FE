@@ -36,3 +36,28 @@ export function mapProblem(p: ProblemDetails, ctx: string): UiProblem {
   }
 }
 const camel = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+
+export interface BannerCopy {
+  tone: "error" | "warning";
+  titleKey?: string;
+  textKey: string;
+}
+
+/**
+ * Comment composer problems (design: content README "Errors"). 400 is shown under the field and 401 opens the
+ * session dialog (api client), so callers skip both. The typed text is kept.
+ */
+export function commentBanner(p: ProblemDetails): BannerCopy {
+  switch (p.status) {
+    case 0:
+      return { tone: "error", titleKey: "err.500.t", textKey: "err.network" };
+    case 404:
+      return { tone: "error", titleKey: "err.404.t", textKey: "comments.err.404" };
+    case 422:
+      return { tone: "error", titleKey: "err.422.t", textKey: "comments.err.422" };
+    case 429:
+      return { tone: "error", titleKey: "comments.err.429.t", textKey: "comments.err.429" };
+    default:
+      return { tone: "error", titleKey: "err.500.t", textKey: "err.500" };
+  }
+}
