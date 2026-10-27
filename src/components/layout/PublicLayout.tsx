@@ -1,6 +1,8 @@
-// Public pages (home, "скоро" modules): PublicHeader + content + PublicFooter. Not the AppShell.
+// Public pages (home, Content, "скоро" modules): PublicHeader + content + PublicFooter. Not the AppShell.
+// Session dialog only after a request failed with 401 (an action that needs sign-in), never just because the token ran out.
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { SessionExpiredDialog } from "@/components/feedback/SessionNotices";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 
@@ -18,6 +20,7 @@ export function PublicLayout() {
         <Outlet />
       </main>
       <PublicFooter />
+      <SessionExpiredDialog afterRequest />
     </div>
   );
 }

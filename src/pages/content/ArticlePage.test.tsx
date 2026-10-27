@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ArticleDto } from "@/api/content";
@@ -109,5 +109,68 @@ describe("ArticlePage", () => {
     open();
     await userEvent.click(await screen.findByRole("button", { name: tr("common.retry") }));
     expect(await screen.findByRole("heading", { level: 1, name: "Как да започнеш със силови тренировки" })).toBeInTheDocument();
+  });
+
+  describe("author / admin toolbar", () => {
+    const trainer = { ...testUser, roles: [{ id: "r-trainer", name: "Trainer" }] };
+    const admin = { ...testUser, id: "22222222-2222-2222-2222-222222222222", roles: [{ id: "r-admin", name: "Administrator" }] };
+    const toolbar = () => screen.queryByRole("toolbar", { name: tr("article.toolbar") });
+
+    it("the author with the Trainer role publishes a draft; the article reloads", async () => {
+      signIn(trainer);
+      const fetchMock = mockApi(
+        { status: 200, body: article(draft) },
+        { status: 200, body: [anna] },
+        { status: 204 },
+        { status: 200, body: article() },
+      );
+      open();
+      expect(await screen.findByText(tr("status.Draft"))).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: tr("article.archive") })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: tr("article.publish") }));
+      expect(await screen.findByRole("button", { name: tr("article.archive") })).toBeInTheDocument();
+      expect(screen.queryByText(tr("article.private.t"))).not.toBeInTheDocument();
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
+      expect(post?.[0]).toBe("/api/articles/7/publish");
+    });
+
+    it("an admin archives someone else's published article", async () => {
+      signIn(admin);
+      const fetchMock = mockApi({ status: 200, body: article() }, { status: 200, body: [anna] }, { status: 204 }, { status: 200, body: article({ status: "Archived" }) });
+      open();
+      await userEvent.click(await screen.findByRole("button", { name: tr("article.archive") }));
+      expect(await screen.findByText(tr("status.Archived"))).toBeInTheDocument();
+      expect(fetchMock.mock.calls.find(([, init]) => init?.method === "POST")?.[0]).toBe("/api/articles/7/archive");
+    });
+
+    it("no toolbar for readers, nor for an author who is no longer a trainer", async () => {
+      signIn(); // the author, role User only
+      mockApi({ status: 200, body: article() }, { status: 200, body: [anna] });
+      open();
+      await screen.findByRole("heading", { level: 1 });
+      expect(toolbar()).not.toBeInTheDocument();
+    });
+
+    it("delete asks first, then goes to the list", async () => {
+      signIn(trainer);
+      const fetchMock = mockApi({ status: 200, body: article() }, { status: 200, body: [anna] }, { status: 204 });
+      open();
+      await userEvent.click(await screen.findByRole("button", { name: tr("article.delete") }));
+      const dialog = screen.getByRole("alertdialog", { name: tr("article.delete.t") });
+      expect(dialog).toHaveTextContent("„Как да започнеш със силови тренировки“");
+      await userEvent.click(within(dialog).getByRole("button", { name: tr("article.delete") }));
+      expect(await screen.findByTestId("location")).toHaveTextContent(/^\/articles$/);
+      const del = fetchMock.mock.calls.find(([, init]) => init?.method === "DELETE");
+      expect(del?.[0]).toBe("/api/articles/7");
+    });
+
+    it("403 → warning banner in Bulgarian, the raw detail is not shown", async () => {
+      signIn(trainer);
+      mockApi({ status: 200, body: article(draft) }, { status: 200, body: [anna] }, { status: 403, body: { status: 403, detail: "You can only modify your own articles" } });
+      open();
+      await userEvent.click(await screen.findByRole("button", { name: tr("article.publish") }));
+      expect(await screen.findByText(tr("editor.err.403"))).toBeInTheDocument();
+      expect(screen.queryByText(/only modify/)).not.toBeInTheDocument();
+    });
   });
 });

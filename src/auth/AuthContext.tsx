@@ -20,6 +20,8 @@ interface AuthState {
   /** `exp` of the access token in ms, or null. */
   expiresAt: number | null;
   sessionState: SessionState;
+  /** Why the session ended: a request answered 401 / account gone, or the token's `exp` passed (null while active). */
+  endedBy: "request" | "timer" | null;
   hasRole: (role: string) => boolean;
   signIn: (session: AuthResponseDto) => void;
   signOut: () => void;
@@ -44,6 +46,7 @@ function loadSession(): AuthResponseDto | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthResponseDto | null>(loadSession);
   const [sessionState, setSessionState] = useState<SessionState>("active");
+  const [endedBy, setEndedBy] = useState<"request" | "timer" | null>(null);
   const queryClient = useQueryClient();
   const expiresAt = session ? tokenExpiry(session.accessToken) : null;
 
@@ -51,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem(STORAGE_KEY);
     setSession(null);
     setSessionState("active");
+    setEndedBy(null);
     // Cached server data belongs to the previous user (e.g. users/me) → drop it.
     queryClient.clear();
   }, [queryClient]);
@@ -59,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     setSession(s);
     setSessionState("active");
+    setEndedBy(null);
   }, []);
 
   const setUser = useCallback((user: UserDto) => {
@@ -71,9 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // A reload after this starts signed out; "deleted" wins over a later "expired" (e.g. a 401 from a query still in flight).
-  const endSession = useCallback((kind: "expired" | "deleted") => {
+  // A request wins over the timer, so public pages can still show the dialog once an action hits the 401.
+  const endSession = useCallback((kind: "expired" | "deleted", by: "request" | "timer" = "request") => {
     sessionStorage.removeItem(STORAGE_KEY);
     setSessionState((s) => (s === "deleted" ? s : kind));
+    setEndedBy((b) => (b === "request" ? b : by));
   }, []);
 
   const dismissWarning = useCallback(() => setSessionState((s) => (s === "warning" ? "active" : s)), []);
@@ -94,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       () => setSessionState((s) => (s === "active" ? "warning" : s)),
       Math.max(0, expiresAt - SESSION_WARNING_MS - now),
     );
-    const expire = window.setTimeout(() => endSession("expired"), Math.max(0, expiresAt - now));
+    const expire = window.setTimeout(() => endSession("expired", "timer"), Math.max(0, expiresAt - now));
     return () => {
       window.clearTimeout(warn);
       window.clearTimeout(expire);
@@ -108,13 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!session,
       expiresAt,
       sessionState,
+      endedBy,
       hasRole: (role) => !!session?.user.roles.some((r) => r.name === role),
       signIn,
       signOut,
       setUser,
       dismissWarning,
     }),
-    [session, expiresAt, sessionState, signIn, signOut, setUser, dismissWarning],
+    [session, expiresAt, sessionState, endedBy, signIn, signOut, setUser, dismissWarning],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

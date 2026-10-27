@@ -52,16 +52,18 @@ function WarningBanner({ expiresAt, onDismiss }: { expiresAt: number; onDismiss:
 /**
  * "Сесията ти изтече" (at `exp` or any 401) / "Профилът не е наличен" (404 on /api/users/me). Can't be dismissed:
  * Escape and overlay clicks do nothing, focus stays on the only button. Expired → login, then back to this page.
+ * `afterRequest` (public pages): only once a request failed — a token that merely ran out does not interrupt reading.
  */
-export function SessionExpiredDialog() {
+export function SessionExpiredDialog({ afterRequest }: { afterRequest?: boolean }) {
   const { t } = useTranslation();
-  const { sessionState, user, signOut } = useAuth();
+  const { sessionState, endedBy, user, signOut } = useAuth();
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const ref = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const textId = useId();
-  const kind = sessionState === "expired" || sessionState === "deleted" ? sessionState : null;
+  const ended = sessionState === "expired" || sessionState === "deleted";
+  const kind = ended && (!afterRequest || endedBy === "request") ? sessionState : null;
 
   useEffect(() => {
     if (!kind) return;

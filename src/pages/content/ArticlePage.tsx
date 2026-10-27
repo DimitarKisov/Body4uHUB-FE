@@ -1,7 +1,7 @@
 // C2 · Статия — GET /api/articles/:id (design: ui_kits/content/ArticleScreens.jsx → ArticleScreen).
 // Public page inside PublicLayout. Column max 720px: back → hero cover → eyebrow → H1 → byline → body (paragraphs split on blank lines).
 // Drafts/archived come back only for the author or an admin → warning banner. 404 (or a non-numeric id) → C2c "Статията не е намерена".
-// Not here yet: author/admin toolbar, bookmark button, comments (next steps).
+// Author (with the Trainer role) or admin → ArticleToolbar above the hero. Not here yet: Редактирай (C4), bookmark, comments.
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthors } from "@/hooks/useAuthors";
 import { formatNumber } from "@/lib/format";
 import { publicWrap } from "@/lib/layout";
+import { ArticleToolbar } from "@/pages/content/ArticleToolbar";
 import { cn } from "@/lib/utils";
 
 const heroClass = "mb-6 h-[120px] md:mb-8 md:h-[200px]";
@@ -81,6 +82,7 @@ export function ArticlePage() {
           </div>
         ) : (
           <article>
+            {((user?.id === a.authorId && hasRole("Trainer")) || hasRole("Administrator")) && <ArticleToolbar article={a} />}
             {a.status !== "Published" && (
               <Banner tone="warning" icon={EyeOff} title={t("article.private.t")} className="mb-4">
                 {user?.id === a.authorId ? t("article.private") : hasRole("Administrator") ? t("article.private.admin") : null}

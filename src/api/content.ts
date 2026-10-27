@@ -50,3 +50,12 @@ export interface ArticleDto extends ArticleSummaryDto {
  */
 export const getArticle = (id: number) => api<ArticleDto>(`/api/articles/${id}`, { auth: "optional" });
 export const articleQueryKey = (id: number) => ["articles", "detail", id] as const;
+
+/** Author/Admin (Trainer or Administrator role). 204 · 401 · 403 not the author · 404 missing · 422 already published or deleted. */
+export const publishArticle = (id: number) => api(`/api/articles/${id}/publish`, { method: "POST" });
+
+/** Author/Admin. 204 · 401 · 403 not the author · 404 missing · 422 not published or deleted. */
+export const archiveArticle = (id: number) => api(`/api/articles/${id}/archive`, { method: "POST" });
+
+/** Author/Admin. Soft delete. 204 · 401 · 403 not the author · 404 missing · 422 already deleted. */
+export const deleteArticle = (id: number) => api(`/api/articles/${id}`, { method: "DELETE" });
