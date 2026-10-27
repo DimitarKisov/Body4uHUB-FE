@@ -48,15 +48,26 @@ describe("ArticlePage", () => {
     expect(screen.getByText(tr("content.views", { n: "12 840" }))).toBeInTheDocument();
     expect(screen.getByText("Първи абзац.").tagName).toBe("P");
     expect(screen.getByText(/Втори абзац,/).tagName).toBe("P");
-    expect(screen.queryByText(tr("content.editedF"))).not.toBeInTheDocument();
     expect(screen.queryByText(tr("article.private.t"))).not.toBeInTheDocument();
     expect(fetchMock.mock.calls[0][0]).toBe("/api/articles/7");
   });
 
-  it("marks an edited article", async () => {
+  it("an edited article shows no edit marker or date, only the publication date", async () => {
     mockApi({ status: 200, body: article({ modifiedAt: "2026-10-21T09:30:00" }) }, { status: 200, body: [anna] });
     open();
-    expect(await screen.findByText(tr("content.editedF"))).toBeInTheDocument();
+    expect(await screen.findByText("20.10.2026")).toBeInTheDocument();
+    expect(screen.queryByText(/редактиран/)).not.toBeInTheDocument();
+    expect(screen.queryByText("21.10.2026")).not.toBeInTheDocument();
+  });
+
+  it("an expired session still shows a published article, without the session dialog", async () => {
+    signIn();
+    const fetchMock = mockApi({ status: 401 }, { status: 200, body: article() }, { status: 200, body: [anna] });
+    open();
+    expect(await screen.findByRole("heading", { level: 1, name: "Как да започнеш със силови тренировки" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls[0][1]?.headers).toHaveProperty("Authorization");
+    expect(fetchMock.mock.calls[1][1]?.headers).not.toHaveProperty("Authorization");
+    expect(sessionStorage.getItem("b4u.session")).not.toBeNull();
   });
 
   it("404 → not found, with a way back to the list", async () => {
@@ -77,11 +88,13 @@ describe("ArticlePage", () => {
 
   it("the author's draft: warning banner and 'Непубликувана' instead of a date", async () => {
     signIn();
-    mockApi({ status: 200, body: article(draft) }, { status: 200, body: [anna] });
+    const fetchMock = mockApi({ status: 200, body: article(draft) }, { status: 200, body: [anna] });
     open();
     expect(await screen.findByText(tr("article.private.t"))).toBeInTheDocument();
     expect(screen.getByText(tr("article.private"))).toBeInTheDocument();
     expect(screen.getByText(tr("article.notPublished"))).toBeInTheDocument();
+    // The very first request after a page load already carries the token (else the author would get a 404 on reload).
+    expect(fetchMock.mock.calls[0][1]?.headers).toHaveProperty("Authorization");
   });
 
   it("an admin viewing someone else's draft gets the admin copy", async () => {

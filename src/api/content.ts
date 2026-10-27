@@ -44,8 +44,9 @@ export interface ArticleDto extends ArticleSummaryDto {
 }
 
 /**
- * Public; sends the token when signed in, so the author or an admin also gets drafts and archived articles.
+ * Public; sends the token when signed in, so the author or an admin also gets drafts and archived articles
+ * (an expired session falls back to the anonymous view, see client `auth: "optional"`).
  * 200 · 404 missing, deleted or someone else's unpublished article. Counts a view for a published article (once per IP).
  */
-export const getArticle = (id: number) => api<ArticleDto>(`/api/articles/${id}`);
+export const getArticle = (id: number) => api<ArticleDto>(`/api/articles/${id}`, { auth: "optional" });
 export const articleQueryKey = (id: number) => ["articles", "detail", id] as const;

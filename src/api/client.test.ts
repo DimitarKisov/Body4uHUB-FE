@@ -59,6 +59,20 @@ describe("api", () => {
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
 
+  it("optional auth: a 401 is retried without the token and keeps the session", async () => {
+    const fetchMock = mockApi({ status: 401 }, { status: 200, body: { id: 7 } });
+    await expect(api("/api/articles/7", { auth: "optional" })).resolves.toEqual({ id: 7 });
+    expect(fetchMock.mock.calls[0][1]?.headers).toMatchObject({ Authorization: "Bearer token-123" });
+    expect(fetchMock.mock.calls[1][1]?.headers).not.toHaveProperty("Authorization");
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it("optional auth: other errors are not retried", async () => {
+    const fetchMock = mockApi({ status: 404 });
+    expect(await statusOf(api("/api/articles/7", { auth: "optional" }))).toBe(404);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it("reports a missing account on 404 from the /me endpoints only", async () => {
     mockApi({ status: 404 });
     await statusOf(api("/api/users/u7"));

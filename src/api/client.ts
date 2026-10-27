@@ -25,10 +25,26 @@ export class ApiError extends Error {
 /** status 0 = network failure (no response). */
 export const NETWORK_ERROR = 0;
 
-type Options = Omit<RequestInit, "body"> & { body?: unknown; auth?: boolean };
+/**
+ * auth: true = send the token (default) · false = never · "optional" = public endpoint that shows more to a signed-in user:
+ * the token is sent, but a 401 (expired session) is retried without it and does not end the session —
+ * reading stays possible; the session dialog comes with the first action that needs sign-in.
+ */
+type Options = Omit<RequestInit, "body"> & { body?: unknown; auth?: boolean | "optional" };
 
-export async function api<T = void>(path: string, { body, auth = true, headers, ...init }: Options = {}): Promise<T> {
+export async function api<T = void>(path: string, { auth = true, ...opts }: Options = {}): Promise<T> {
   const token = auth ? getToken() : null;
+  if (auth !== "optional" || !token) return send<T>(path, opts, token, true);
+  try {
+    return await send<T>(path, opts, token, false);
+  } catch (e) {
+    if (e instanceof ApiError && e.problem.status === 401) return send<T>(path, opts, null, false);
+    throw e;
+  }
+}
+
+/** One request. reportSession: a 401 / account-gone 404 on a call that carried the token ends the session. */
+async function send<T>(path: string, { body, headers, ...init }: Omit<Options, "auth">, token: string | null, reportSession: boolean): Promise<T> {
   let res: Response;
   try {
     res = await fetch(BASE + path, {
@@ -51,9 +67,9 @@ export async function api<T = void>(path: string, { body, auth = true, headers, 
     return (text ? JSON.parse(text) : undefined) as T;
   }
 
-  if (res.status === 401 && token) onUnauthorized();
+  if (reportSession && res.status === 401 && token) onUnauthorized();
   // The /me endpoints answer 404 when the signed-in account no longer exists (the token is still valid).
-  if (res.status === 404 && token && /^\/api\/users\/me(\/|$)/.test(path)) onAccountGone();
+  if (reportSession && res.status === 404 && token && /^\/api\/users\/me(\/|$)/.test(path)) onAccountGone();
 
   let problem: ProblemDetails = { status: res.status };
   try {

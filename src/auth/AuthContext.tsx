@@ -79,13 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const dismissWarning = useCallback(() => setSessionState((s) => (s === "warning" ? "active" : s)), []);
 
   // Token getter reads the latest session. 401 / missing account → the dialog, not a redirect.
-  useEffect(() => {
-    configureApi({
-      getToken: () => session?.accessToken ?? null,
-      onUnauthorized: () => endSession("expired"),
-      onAccountGone: () => endSession("deleted"),
-    });
-  }, [session, endSession]);
+  // Wired during render, not in an effect: the children's queries start in their own effects, which run before the
+  // parent's, so the first request after a page load would otherwise go out without the token. Only swaps callbacks.
+  configureApi({
+    getToken: () => session?.accessToken ?? null,
+    onUnauthorized: () => endSession("expired"),
+    onAccountGone: () => endSession("deleted"),
+  });
 
   useEffect(() => {
     if (!expiresAt) return;

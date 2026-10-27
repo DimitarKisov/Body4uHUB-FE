@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthors } from "@/hooks/useAuthors";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
 import { publicWrap } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 
@@ -105,7 +105,6 @@ export function ArticlePage() {
                     <Eye />
                     {t("content.views", { n: formatNumber(a.viewCount) })}
                   </span>
-                  {a.modifiedAt && <span title={formatDateTime(a.modifiedAt)}>{t("content.editedF")}</span>}
                 </div>
               </div>
             </div>
